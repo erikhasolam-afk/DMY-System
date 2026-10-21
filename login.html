@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DMY Dental Clinic — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --o:#F47B20; --ol:#FFF3E8; --t:#3A9EA5; --tl:#E8F6F7; --td:#1F6E74;
+  --w:#fff; --bg:#F7F9FA; --tx:#1A2E35; --mu:#6B7E85; --bd:#D6E4E6;
+  --fh:'Nunito',sans-serif; --fb:'Lato',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--fb);background:linear-gradient(135deg,#1F6E74 0%,#3A9EA5 40%,#F47B20 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.login-wrap{width:100%;max-width:400px;padding:20px;}
+.login-card{background:#fff;border-radius:20px;padding:36px 32px;box-shadow:0 24px 64px rgba(0,0,0,.22);}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:28px;justify-content:center;}
+.brand-icon{width:48px;height:48px;border-radius:50%;background:var(--o);display:flex;align-items:center;justify-content:center;}
+.brand-smile{width:26px;height:14px;border:3px solid #fff;border-top:none;border-radius:0 0 26px 26px;}
+.brand-name{font-family:var(--fh);font-size:22px;font-weight:800;}
+.brand-name span{color:var(--t);}
+.brand-sub{font-size:11px;color:var(--mu);font-weight:600;letter-spacing:.5px;margin-top:1px;}
+h2{font-family:var(--fh);font-size:18px;font-weight:800;color:var(--tx);margin-bottom:6px;text-align:center;}
+.sub{font-size:12px;color:var(--mu);text-align:center;margin-bottom:24px;}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;}
+.fl{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;}
+.fc{padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;font-family:var(--fb);color:var(--tx);background:var(--bg);transition:border-color .15s;width:100%;}
+.fc:focus{outline:none;border-color:var(--t);background:#fff;}
+.btn-login{width:100%;padding:12px;background:var(--o);color:#fff;border:none;border-radius:10px;font-family:var(--fh);font-size:14px;font-weight:800;cursor:pointer;transition:all .15s;margin-top:6px;}
+.btn-login:hover{background:#d9690f;transform:translateY(-1px);box-shadow:0 4px 16px rgba(244,123,32,.35);}
+.btn-login:disabled{background:#ccc;cursor:not-allowed;transform:none;box-shadow:none;}
+.err{background:#FCEBEB;color:#B91C1C;border:1px solid #F3A0A0;border-radius:8px;padding:9px 12px;font-size:12px;margin-bottom:12px;display:none;align-items:center;gap:7px;}
+.err.show{display:flex;}
+.divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--mu);font-size:11px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--bd);}
+.footer-note{text-align:center;font-size:11px;color:var(--mu);margin-top:18px;}
+.spinner{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pwd-wrap{position:relative;}
+.pwd-wrap .fc{padding-right:40px;}
+.btn-patient{display:block;text-align:center;width:100%;padding:12px;background:var(--tl);color:var(--td);border:2px solid var(--t);border-radius:10px;font-family:var(--fh);font-size:14px;font-weight:800;text-decoration:none;transition:all .15s;}
+.btn-patient:hover{background:var(--t);color:#fff;}
+.patient-note{text-align:center;font-size:11px;color:var(--mu);margin-top:6px;}
+.pwd-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--mu);}
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon"><div class="brand-smile"></div></div>
+      <div>
+        <div class="brand-name"><span>DMY</span> Dental</div>
+        <div class="brand-sub">Patient Records System</div>
+      </div>
+    </div>
+    <h2>Welcome back 👋</h2>
+    <p class="sub">Sign in to your clinic account</p>
+    <div id="login-err" class="err">⚠ <span id="err-msg">Invalid email or password.</span></div>
+    <div class="fg">
+      <label class="fl">Email Address</label>
+      <input class="fc" type="email" id="l-email" placeholder="doctor@dmydental.com" autocomplete="email"/>
+    </div>
+    <div class="fg">
+      <label class="fl">Password</label>
+      <div class="pwd-wrap">
+        <input class="fc" type="password" id="l-pwd" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="pwd-eye" onclick="togglePwd()" type="button" id="eye-btn">👁</button>
+      </div>
+    </div>
+    <button class="btn-login" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="divider">or</div>
+    <a href="register.html" class="btn-patient">🦷 Register as a Patient / Book an Appointment</a>
+    <div class="patient-note">For patients — no account needed.</div>
+    <div class="footer-note">
+      Clinic staff without an account: contact your clinic administrator.<br>
+      <span style="color:var(--t);font-weight:700;font-family:var(--fh)">DMY Dental Clinic</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script> 
+<script>
+function togglePwd() {
+  const inp = document.getElementById('l-pwd');
+  const btn = document.getElementById('eye-btn');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pwd   = document.getElementById('l-pwd').value;
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-err');
+  const msg   = document.getElementById('err-msg');
+
+  if (!email || !pwd) {
+    msg.textContent = 'Please enter your email and password.';
+    err.classList.add('show'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in…';
+  err.classList.remove('show');
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+    if (error) throw error;
+    window.location.href = 'index.html';
+  } catch(e) {
+    msg.textContent = e.message || 'Login failed. Please try again.';
+    err.classList.add('show');
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In';
+  }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// If already logged in, redirect
+(async () => {
+  const { data } = await supabase.auth.getSession();
+  if (data.session) window.location.href = 'index.html';
+})();
+</script>
+</body>
+</html>

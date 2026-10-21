@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Patient Registration — DMY Dental Clinic</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  body { display:block; background:var(--bg); }
+  .pub-top { background:#fff;border-bottom:3px solid var(--o);padding:0 20px;height:70px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(244,123,32,.1); }
+  .pub-top a.back { margin-left:auto;font-family:var(--fh);font-weight:700;font-size:13px;color:var(--td);text-decoration:none; }
+  .pub-wrap { max-width:820px;margin:0 auto;padding:26px 16px 60px; }
+  .steps { display:flex;gap:6px;margin:6px 0 20px; }
+  .step-pill { flex:1;text-align:center;padding:10px 6px;border-radius:10px;background:#fff;border:1.5px solid var(--bd);font-family:var(--fh);font-weight:700;font-size:12px;color:var(--mu); }
+  .step-pill b { display:block;font-size:16px; }
+  .step-pill.on { border-color:var(--o);color:var(--o);background:var(--ol); }
+  .step-pill.done { border-color:var(--t);color:var(--td); }
+  .step { display:none; } .step.on { display:block; }
+  .req { color:#E24B4A; }
+  .hint { font-size:12px;color:var(--mu);margin-top:3px; }
+  .ferr { color:#E24B4A;font-size:12px;font-weight:600;margin-top:3px;display:none; }
+  .fg.bad .fc { border-color:#E24B4A;background:#FFF5F5; } .fg.bad .ferr { display:block; }
+  .yn.bad { background:#FFF5F5; }
+  .nav-row { display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap; }
+  .notice { background:var(--tl);border:1px solid #9FE1CB;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.55;color:var(--td);margin-bottom:12px; }
+  .review-sec { font-family:var(--fh);font-weight:800;color:var(--o);font-size:13px;margin:14px 0 6px;border-bottom:2px solid var(--ol);padding-bottom:4px;display:flex;justify-content:space-between; }
+  .review-sec a { font-size:12px;color:var(--t);cursor:pointer; }
+  .rv { display:grid;grid-template-columns:180px 1fr;gap:4px 12px;font-size:13px;padding:3px 0; }
+  .rv span:first-child { color:var(--mu);font-weight:700;font-size:12px; }
+  .slot-grid { display:flex;flex-wrap:wrap;gap:6px;margin-top:6px; }
+  .slot { padding:8px 12px;border:1.5px solid var(--bd);border-radius:8px;background:#fff;cursor:pointer;font-family:var(--fh);font-weight:700;font-size:13px; }
+  .slot.on { background:var(--o);border-color:var(--o);color:#fff; }
+  .toggle-card { display:flex;align-items:center;gap:10px;padding:14px;border:2px dashed var(--bd);border-radius:12px;cursor:pointer;font-family:var(--fh);font-weight:700; }
+  .toggle-card input { width:18px;height:18px;accent-color:var(--o); }
+  .success { text-align:center;padding:30px 18px; }
+  .ref { font-family:var(--fh);font-size:30px;font-weight:800;letter-spacing:2px;color:var(--o);background:var(--ol);border:2px dashed var(--o);border-radius:12px;padding:12px 18px;display:inline-block;margin:12px 0; }
+  .hp { position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden; }
+  .spinner { display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @media (max-width:600px) { .rv { grid-template-columns:1fr; } .step-pill span { display:none; } .pub-top .logo-sub { display:none; } }
+  @media print { .pub-top, .nav-row, .no-print { display:none !important; } }
+</style>
+</head>
+<body>
+<div class="pub-top">
+  <div class="logo-icon"><div class="logo-smile"></div></div>
+  <div><div class="logo-text"><span class="logo-dmy">DMY</span> <span style="color:var(--tx);font-size:14px">Dental Clinic</span></div>
+       <div class="logo-sub">Patient Registration</div></div>
+  <a class="back" href="login.html">← Back to home</a>
+</div>
+
+<div class="pub-wrap">
+  <div id="form-area">
+    <div class="page-title">Register as a Patient</div>
+    <div class="page-subtitle">No account needed. Fill in your details, and request an appointment if you like. Fields marked <span class="req">*</span> are required.</div>
+    <div id="closed-msg" class="alert al-i" style="display:none"></div>
+
+    <div class="steps">
+      <div class="step-pill on" data-s="1"><b>1</b><span>Personal</span></div>
+      <div class="step-pill" data-s="2"><b>2</b><span>Health</span></div>
+      <div class="step-pill" data-s="3"><b>3</b><span>Appointment</span></div>
+      <div class="step-pill" data-s="4"><b>4</b><span>Review</span></div>
+    </div>
+
+    <form id="reg" novalidate autocomplete="on" onsubmit="return false">
+      <!-- spam trap: hidden from people, bots fill it -->
+      <div class="hp" aria-hidden="true"><label>Company website<input type="text" name="company_website" id="company_website" tabindex="-1" autocomplete="off"/></label></div>
+
+      <!-- STEP 1 -->
+      <div class="step on" data-step="1">
+        <div class="card"><div class="card-title"><span class="ct-ic">👤</span>Personal Information</div>
+          <div class="fr c3">
+            <div class="fg" data-f="last_name"><label class="fl">Last name <span class="req">*</span></label><input class="fc" id="last_name" autocomplete="family-name" maxlength="60"/><div class="ferr"></div></div>
+            <div class="fg" data-f="first_name"><label class="fl">First name <span class="req">*</span></label><input class="fc" id="first_name" autocomplete="given-name" maxlength="60"/><div class="ferr"></div></div>
+            <div class="fg" data-f="middle_name"><label class="fl">Middle name</label><input class="fc" id="middle_name" autocomplete="additional-name" maxlength="60"/><div class="ferr"></div></div>
+          </div>
+          <div class="fr c3">
+            <div class="fg" data-f="birthdate"><label class="fl">Birthdate <span class="req">*</span></label><input class="fc" type="date" id="birthdate" autocomplete="bday"/><div class="ferr"></div></div>
+            <div class="fg"><label class="fl">Age</label><input class="fc" id="age" readonly style="background:#f5f5f5" placeholder="auto"/></div>
+            <div class="fg" data-f="sex"><label class="fl">Sex <span class="req">*</span></label><select class="fc" id="sex"><option value="">Select</option><option>Male</option><option>Female</option></select><div class="ferr"></div></div>
+          </div>
+          <div class="fr"><div class="fg" data-f="address"><label class="fl">Home address <span class="req">*</span></label><input class="fc" id="address" autocomplete="street-address" maxlength="250" placeholder="Street, Barangay, City/Municipality, Province"/><div class="ferr"></div></div></div>
+          <div class="fr c2">
+            <div class="fg" data-f="mobile"><label class="fl">Cellphone number <span class="req">*</span></label><input class="fc" id="mobile" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="09171234567"/><div class="hint">11 digits, starts with 09</div><div class="ferr"></div></div>
+            <div class="fg" data-f="email"><label class="fl">E-mail address</label><input class="fc" type="email" id="email" autocomplete="email" maxlength="120" placeholder="optional"/><div class="ferr"></div></div>
+          </div>
+          <div id="guardian-box" style="display:none">
+            <div class="alert al-i" style="margin-bottom:12px">⚠ The patient is under 18. A parent or guardian's details are required.</div>
+            <div class="fr c2">
+              <div class="fg" data-f="guardian_name"><label class="fl">Parent / guardian name <span class="req">*</span></label><input class="fc" id="guardian_name" maxlength="100"/><div class="ferr"></div></div>
+              <div class="fg" data-f="guardian_mobile"><label class="fl">Parent / guardian cellphone <span class="req">*</span></label><input class="fc" id="guardian_mobile" inputmode="numeric" maxlength="11" placeholder="09171234567"/><div class="ferr"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step" data-step="2">
+        <div class="card"><div class="card-title"><span class="ct-ic">🏥</span>Health Questions</div>
+          <div class="notice">These are the basic health questions the clinic needs before treatment. Other medical details are asked privately at the clinic.</div>
+          <div id="health-q"></div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step" data-step="3">
+        <div class="card"><div class="card-title"><span class="ct-ic">📅</span>Appointment Request <span class="hint" style="margin-left:6px">(optional)</span></div>
+          <label class="toggle-card"><input type="checkbox" id="want-appt"/> I would like to request an appointment</label>
+          <div id="appt-box" style="display:none;margin-top:16px">
+            <div class="fr c2">
+              <div class="fg" data-f="branch"><label class="fl">Preferred branch</label><select class="fc" id="branch"><option value="">No preference</option></select><div class="ferr"></div></div>
+              <div class="fg" data-f="dentist"><label class="fl">Preferred dentist</label><select class="fc" id="dentist"><option value="">No preference</option></select><div class="ferr"></div></div>
+            </div>
+            <div class="fr c2">
+              <div class="fg" data-f="preferred_date"><label class="fl">Preferred date <span class="req">*</span></label><input class="fc" type="date" id="preferred_date"/><div class="hint" id="hours-hint"></div><div class="ferr"></div></div>
+              <div class="fg" data-f="reason"><label class="fl">Reason for visit <span class="req">*</span></label>
+                <select class="fc" id="reason"><option value="">Select</option><option>Check-up / Consultation</option><option>Cleaning</option><option>Tooth pain</option><option>Filling</option><option>Extraction</option><option>Braces / Orthodontic</option><option>Root canal</option><option>Teeth whitening</option><option>Dentures</option><option>Other</option></select><div class="ferr"></div></div>
+            </div>
+            <div class="fg" data-f="preferred_time"><label class="fl">Preferred time <span class="req">*</span></label>
+              <div id="slots" class="slot-grid"><span class="hint">Choose a date first.</span></div><div class="ferr"></div></div>
+            <div class="fg" style="margin-top:12px"><label class="fl">Additional notes</label><textarea class="fc" id="notes" maxlength="500" rows="2" placeholder="optional"></textarea></div>
+            <div class="notice" style="margin-top:12px">Only times that are currently free are shown. <b>Your appointment is not confirmed</b> until the clinic contacts you.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step" data-step="4">
+        <div class="card"><div class="card-title"><span class="ct-ic">🔍</span>Review your information</div>
+          <div id="review"></div>
+        </div>
+        <div class="card"><div class="card-title"><span class="ct-ic">🔒</span>Privacy &amp; Consent</div>
+          <div class="notice">
+            <b>Privacy notice.</b> DMY Dental Clinic collects the personal and health information in this form only to register you as a patient,
+            schedule your visit and give you safe dental care. It is stored securely, can be seen only by authorized clinic staff and dentists,
+            and is not shared with third parties except when required by law. You may ask to see, correct or delete your information by
+            contacting the clinic. This follows the Data Privacy Act of 2012 (Republic Act No. 10173).
+          </div>
+          <div class="fg" data-f="consent_privacy"><label class="fck"><input type="checkbox" id="consent_privacy"/> I have read the privacy notice and I agree to the collection and processing of my personal and health information for these purposes. <span class="req">*</span></label><div class="ferr"></div></div>
+          <div class="fg" data-f="consent_accuracy" style="margin-top:8px"><label class="fck"><input type="checkbox" id="consent_accuracy"/> I declare that the information I gave is true and complete to the best of my knowledge. <span class="req">*</span></label><div class="ferr"></div></div>
+        </div>
+        <div id="submit-err" class="alert" style="display:none;background:#FCEBEB;color:#B91C1C;border:1px solid #F3A0A0"></div>
+      </div>
+
+      <div class="nav-row">
+        <button type="button" class="btn btn-gray" id="btn-back" style="visibility:hidden">← Back</button>
+        <button type="button" class="btn btn-p" id="btn-next">Next →</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="done" class="card success" style="display:none">
+    <div style="font-size:44px">✅</div>
+    <div class="page-title" style="margin-top:6px">Submitted successfully</div>
+    <p style="font-size:14px;max-width:520px;margin:8px auto 0">Your information has been submitted successfully. Please save your reference number. The clinic will review your registration<span id="done-appt"> and appointment request</span>.</p>
+    <div class="ref" id="ref-no">—</div>
+    <p id="done-appt-note" style="font-size:14px;max-width:520px;margin:0 auto 14px;color:#B91C1C;font-weight:700">Your appointment is not confirmed until you receive confirmation from the clinic.</p>
+    <p id="done-repeat" class="hint" style="display:none;margin-bottom:12px">We already had this submission, so we kept your original reference number.</p>
+    <div class="no-print" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-o" onclick="navigator.clipboard?.writeText(document.getElementById('ref-no').textContent);this.textContent='Copied ✓'">📋 Copy reference</button>
+      <button class="btn btn-gray" onclick="window.print()">🖨 Print</button>
+      <a class="btn btn-s" href="login.html" style="text-decoration:none">← Back to home</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script>
+/* Public page: no login. Everything goes through the "public-registration" Edge Function. */
+const STARTED_AT = Date.now();
+const CLIENT_TOKEN = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+let step = 1, info = null, chosenSlot = '', submitting = false;
+
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const localISO = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const fmtT = t => { const [h, m] = t.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h >= 12 ? ' PM' : ' AM'); };
+const fmtD = s => new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+async function call(body) {
+  if (!supabase?.functions) throw new Error('Cannot reach the clinic system. Please check your internet connection.');
+  const { data, error } = await supabase.functions.invoke('public-registration', { body });
+  if (error) {
+    let j = null; try { j = await error.context?.json?.(); } catch (_) {}
+    const e = new Error(j?.error || 'Cannot reach the clinic system right now. Please try again or call the clinic.');
+    e.field = j?.field; e.slots = j?.slots; e.status = error.context?.status;
+    throw e;
+  }
+  return data;
+}
+
+/* ── Health questions: the same required questions as the clinic's patient form ── */
+const HQ = [
+  ['q1', '1. Are you in good health?'], ['q2', '2. Are you under medical treatment now?', 'q2a', 'If yes, what condition is being treated?'],
+  ['q3', '3. Have you ever had a serious illness or surgical operation?', 'q3a', 'If yes, what illness or operation?'],
+  ['q4', '4. Have you ever been hospitalized?', 'q4a', 'If yes, when and why?'], ['q5', '5. Are you taking any medication?', 'q5a', 'If yes, please specify'],
+  ['q6', '6. Do you use tobacco products?'],
+];
+const ALLERGIES = ['Lidocaine', 'Penicillin', 'Sulfa', 'Aspirin', 'Latex', 'Others', 'None'];
+(function buildHealth() {
+  let h = '';
+  HQ.forEach(([q, label, sub, subLabel]) => {
+    h += `<div class="yn" data-q="${q}"><span class="yn-l">${label} <span class="req">*</span></span><div class="yn-o">
+      <label class="yn-i"><input type="radio" name="${q}" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="${q}" value="no"/>No</label></div></div>`;
+    if (sub) h += `<div style="padding:4px 0 6px 12px;display:none" id="${sub}-wrap"><input class="fc" id="${sub}" maxlength="200" placeholder="${subLabel}"/></div>`;
+  });
+  h += `<div class="yn" data-q="q8" style="flex-wrap:wrap"><span class="yn-l">8. Are you allergic to any of the following? <span class="req">*</span></span>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${ALLERGIES.map(a => `<label class="fck"><input type="checkbox" name="q8" value="${a}"/>${a}</label>`).join('')}</div></div>`;
+  [['q10a', '10. Are you pregnant?'], ['q10b', 'Are you nursing?'], ['q10c', 'Are you taking birth control pills?']].forEach(([q, label]) => {
+    h += `<div class="yn" data-q="${q}"><span class="yn-l">${label} <span class="req">*</span></span><div class="yn-o">
+      <label class="yn-i"><input type="radio" name="${q}" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="${q}" value="no"/>No</label><label class="yn-i"><input type="radio" name="${q}" value="na"/>N/A</label></div></div>`;
+  });
+  h += `<div class="ferr" id="health-err" style="margin-top:8px"></div>`;
+  $('health-q').innerHTML = h;
+  ['q2', 'q3', 'q4', 'q5'].forEach(q => document.querySelectorAll(`input[name="${q}"]`).forEach(r => r.addEventListener('change', () => {
+    $(q + 'a-wrap').style.display = r.value === 'yes' && r.checked ? '' : 'none';
+  })));
+  // "None" excludes the others
+  document.querySelectorAll('input[name="q8"]').forEach(c => c.addEventListener('change', () => {
+    if (c.value === 'None' && c.checked) document.querySelectorAll('input[name="q8"]').forEach(o => { if (o !== c) o.checked = false; });
+    if (c.value !== 'None' && c.checked) document.querySelector('input[name="q8"][value="None"]').checked = false;
+  }));
+})();
+
+/* ── Age, minors, male → N/A ── */
+function ageFrom(bd) {
+  if (!bd) return null; const b = new Date(bd + 'T00:00:00'), t = new Date();
+  let a = t.getFullYear() - b.getFullYear(); if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
+  return a;
+}
+$('birthdate').max = localISO(new Date());
+$('birthdate').addEventListener('change', () => {
+  const a = ageFrom($('birthdate').value); $('age').value = a === null || a < 0 ? '' : a;
+  $('guardian-box').style.display = a !== null && a < 18 ? '' : 'none';
+});
+$('sex').addEventListener('change', () => {
+  if ($('sex').value === 'Male') ['q10a', 'q10b', 'q10c'].forEach(q => { const r = document.querySelector(`input[name="${q}"][value="na"]`); if (r) r.checked = true; });
+});
+['mobile', 'guardian_mobile'].forEach(id => $(id).addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11); }));
+
+/* ── Clinic info, branches, dentists, free times ── */
+async function loadInfo() {
+  try {
+    info = await call({ action: 'info' });
+    if (info.clinic_name) document.title = 'Patient Registration — ' + info.clinic_name;
+    if (info.booking_enabled === false) { $('closed-msg').style.display = 'flex'; $('closed-msg').textContent = 'Online registration is currently turned off. Please call the clinic.'; $('btn-next').disabled = true; }
+    $('branch').innerHTML = '<option value="">No preference</option>' + (info.branches || []).map(b => `<option>${esc(b)}</option>`).join('');
+    fillDentists();
+    const today = new Date(info.today + 'T00:00:00'); const max = new Date(today); max.setDate(max.getDate() + (info.max_days_ahead || 90));
+    $('preferred_date').min = localISO(today); $('preferred_date').max = localISO(max);
+    const closed = (info.closed_weekdays || []).map(d => ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'][d]);
+    $('hours-hint').textContent = `Clinic hours ${fmtT(info.open_time)}–${fmtT(info.close_time)}` + (closed.length ? ` · closed ${closed.join(', ')}` : '');
+  } catch (e) {
+    $('closed-msg').style.display = 'flex'; $('closed-msg').textContent = e.message;
+  }
+}
+function fillDentists() {
+  const b = $('branch').value, keep = $('dentist').value;
+  const list = (info?.dentists || []).filter(d => !b || !d.branch || d.branch === b);
+  $('dentist').innerHTML = '<option value="">No preference</option>' + list.map(d => `<option ${d.name === keep ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
+}
+async function loadSlots() {
+  const d = $('preferred_date').value; chosenSlot = '';
+  if (!d) { $('slots').innerHTML = '<span class="hint">Choose a date first.</span>'; return; }
+  $('slots').innerHTML = '<span class="hint">Checking available times…</span>';
+  try {
+    const r = await call({ action: 'slots', date: d, dentist: $('dentist').value, branch: $('branch').value });
+    showSlots(r.slots || []);
+  } catch (e) { $('slots').innerHTML = `<span class="hint" style="color:#B91C1C">${esc(e.message)}</span>`; }
+}
+function showSlots(slots) {
+  $('slots').innerHTML = slots.length
+    ? slots.map(t => `<button type="button" class="slot" data-t="${t}">${fmtT(t)}</button>`).join('')
+    : '<span class="hint" style="color:#B91C1C">No free times on this day. Please choose another date.</span>';
+  $('slots').querySelectorAll('.slot').forEach(b => b.addEventListener('click', () => {
+    $('slots').querySelectorAll('.slot').forEach(x => x.classList.remove('on')); b.classList.add('on'); chosenSlot = b.dataset.t; clearErr('preferred_time');
+  }));
+}
+$('want-appt').addEventListener('change', () => { $('appt-box').style.display = $('want-appt').checked ? '' : 'none'; });
+$('branch').addEventListener('change', () => { fillDentists(); loadSlots(); });
+$('dentist').addEventListener('change', loadSlots);
+$('preferred_date').addEventListener('change', loadSlots);
+
+/* ── Validation (the server checks everything again) ── */
+function setErr(f, msg) {
+  const g = document.querySelector(`.fg[data-f="${f}"]`);
+  if (g) { g.classList.add('bad'); g.querySelector('.ferr').textContent = msg; }
+  const yn = document.querySelector(`.yn[data-q="${f}"]`); if (yn) { yn.classList.add('bad'); $('health-err').textContent = msg; $('health-err').style.display = 'block'; }
+}
+function clearErr(f) { const g = document.querySelector(`.fg[data-f="${f}"]`); if (g) g.classList.remove('bad'); }
+function clearAll() { document.querySelectorAll('.bad').forEach(e => e.classList.remove('bad')); $('health-err').style.display = 'none'; $('submit-err').style.display = 'none'; }
+const NAME_RE = /^[\p{L} .'-]+$/u;
+
+function validate(s) {
+  clearAll(); let ok = true; const bad = (f, m) => { if (ok) setTimeout(() => (document.querySelector(`[data-f="${f}"] .fc`) || document.querySelector(`[data-q="${f}"]`))?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 10); ok = false; setErr(f, m); };
+  const v = id => $(id).value.trim();
+  if (s === 1) {
+    if (!v('last_name') || !NAME_RE.test(v('last_name'))) bad('last_name', 'Enter your last name (letters only).');
+    if (!v('first_name') || !NAME_RE.test(v('first_name'))) bad('first_name', 'Enter your first name (letters only).');
+    if (v('middle_name') && !NAME_RE.test(v('middle_name'))) bad('middle_name', 'Letters only.');
+    const a = ageFrom(v('birthdate'));
+    if (!v('birthdate') || a === null || a < 0 || a > 120) bad('birthdate', 'Enter a valid birthdate.');
+    if (!v('sex')) bad('sex', 'Choose Male or Female.');
+    if (v('address').length < 5) bad('address', 'Enter your home address.');
+    if (!/^09\d{9}$/.test(v('mobile'))) bad('mobile', 'Enter exactly 11 digits starting with 09 (e.g. 09171234567).');
+    if (v('email') && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('email'))) bad('email', 'Enter a valid e-mail address, or leave it blank.');
+    if (a !== null && a < 18) {
+      if (v('guardian_name').length < 3) bad('guardian_name', 'Required for patients under 18.');
+      if (!/^09\d{9}$/.test(v('guardian_mobile'))) bad('guardian_mobile', 'Enter an 11-digit number starting with 09.');
+    }
+  }
+  if (s === 2) {
+    ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q10a', 'q10b', 'q10c'].forEach(q => { if (!document.querySelector(`input[name="${q}"]:checked`)) bad(q, 'Please answer every question marked *.'); });
+    if (!document.querySelector('input[name="q8"]:checked')) bad('q8', 'Please tick your allergies, or "None".');
+  }
+  if (s === 3 && $('want-appt').checked) {
+    if (!v('preferred_date')) bad('preferred_date', 'Choose a date.');
+    else if (!chosenSlot) bad('preferred_time', 'Choose one of the free times.');
+    if (!v('reason')) bad('reason', 'Choose a reason.');
+  }
+  if (s === 4) {
+    if (!$('consent_privacy').checked) bad('consent_privacy', 'Please agree to the privacy notice to continue.');
+    if (!$('consent_accuracy').checked) bad('consent_accuracy', 'Please confirm that your information is accurate.');
+  }
+  return ok;
+}
+
+/* ── Review ── */
+function collect() {
+  const v = id => $(id).value.trim();
+  const radio = q => document.querySelector(`input[name="${q}"]:checked`)?.value || null;
+  const health = {}; ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q10a', 'q10b', 'q10c'].forEach(q => health[q] = radio(q));
+  ['q2a', 'q3a', 'q4a', 'q5a'].forEach(q => health[q] = v(q));
+  health.q8_allergies = [...document.querySelectorAll('input[name="q8"]:checked')].map(c => c.value);
+  return {
+    client_token: CLIENT_TOKEN, started_at: STARTED_AT, company_website: v('company_website'),
+    last_name: v('last_name'), first_name: v('first_name'), middle_name: v('middle_name'), birthdate: v('birthdate'), sex: v('sex'),
+    address: v('address'), mobile: v('mobile'), email: v('email'), guardian_name: v('guardian_name'), guardian_mobile: v('guardian_mobile'),
+    health, consent_privacy: $('consent_privacy').checked, consent_accuracy: $('consent_accuracy').checked,
+    appointment: $('want-appt').checked ? { branch: v('branch'), dentist: v('dentist'), preferred_date: v('preferred_date'), preferred_time: chosenSlot, reason: v('reason'), notes: v('notes') } : null,
+  };
+}
+function renderReview() {
+  const f = collect(), yn = x => ({ yes: 'Yes', no: 'No', na: 'N/A' }[x] || '—');
+  const row = (k, val) => `<div class="rv"><span>${k}</span><span>${esc(val || '—')}</span></div>`;
+  const a = ageFrom(f.birthdate);
+  let h = `<div class="review-sec">Personal <a onclick="go(1)">Edit</a></div>` +
+    row('Name', [f.first_name, f.middle_name, f.last_name].filter(Boolean).join(' ')) + row('Birthdate / age', fmtD(f.birthdate) + ' (' + a + ')') +
+    row('Sex', f.sex) + row('Address', f.address) + row('Cellphone', f.mobile) + row('E-mail', f.email);
+  if (a < 18) h += row('Parent / guardian', f.guardian_name + ' · ' + f.guardian_mobile);
+  h += `<div class="review-sec">Health <a onclick="go(2)">Edit</a></div>` +
+    HQ.map(([q, label, sub]) => row(label.replace(/^\d+\.\s*/, ''), yn(f.health[q]) + (sub && f.health[sub] ? ' — ' + f.health[sub] : ''))).join('') +
+    row('Allergies', f.health.q8_allergies.join(', ')) + row('Pregnant / nursing / pills', [f.health.q10a, f.health.q10b, f.health.q10c].map(yn).join(' / '));
+  h += `<div class="review-sec">Appointment request <a onclick="go(3)">Edit</a></div>` + (f.appointment
+    ? row('Preferred', fmtD(f.appointment.preferred_date) + ' at ' + fmtT(f.appointment.preferred_time)) + row('Branch / dentist', (f.appointment.branch || 'No preference') + ' / ' + (f.appointment.dentist || 'No preference')) +
+      row('Reason', f.appointment.reason) + row('Notes', f.appointment.notes)
+    : '<div class="hint">No appointment requested — registration only.</div>');
+  $('review').innerHTML = h;
+}
+
+/* ── Steps ── */
+function go(s) {
+  step = s;
+  document.querySelectorAll('.step').forEach(e => e.classList.toggle('on', +e.dataset.step === s));
+  document.querySelectorAll('.step-pill').forEach(p => { const n = +p.dataset.s; p.classList.toggle('on', n === s); p.classList.toggle('done', n < s); });
+  $('btn-back').style.visibility = s > 1 ? 'visible' : 'hidden';
+  $('btn-next').innerHTML = s === 4 ? '✓ Submit' : 'Next →';
+  if (s === 4) renderReview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('btn-back').addEventListener('click', () => go(step - 1));
+$('btn-next').addEventListener('click', async () => {
+  if (!validate(step)) return;
+  if (step < 4) return go(step + 1);
+  if (submitting) return;                       // no double submission
+  submitting = true; const btn = $('btn-next'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Submitting…';
+  try {
+    const r = await call({ action: 'submit', form: collect() });
+    $('form-area').style.display = 'none'; $('done').style.display = '';
+    $('ref-no').textContent = r.ref_no;
+    $('done-appt').style.display = r.appointment_requested ? '' : 'none';
+    $('done-appt-note').style.display = r.appointment_requested ? '' : 'none';
+    $('done-repeat').style.display = r.repeat ? '' : 'none';
+    window.scrollTo({ top: 0 });
+  } catch (e) {
+    const stepOf = { last_name: 1, first_name: 1, middle_name: 1, birthdate: 1, sex: 1, address: 1, mobile: 1, email: 1, guardian_name: 1, guardian_mobile: 1,
+                     preferred_date: 3, preferred_time: 3, reason: 3, branch: 3, dentist: 3, consent_privacy: 4, consent_accuracy: 4 };
+    const s = stepOf[e.field] || (/^q\d/.test(e.field || '') ? 2 : 4);
+    if (s !== 4) go(s);
+    if (e.field === 'preferred_time' && e.slots) { showSlots(e.slots); chosenSlot = ''; }
+    if (e.field) setErr(e.field, e.message);
+    if (s === 4 || !e.field) { $('submit-err').style.display = 'flex'; $('submit-err').textContent = '⚠ ' + e.message; }
+  } finally {
+    submitting = false; btn.disabled = false; btn.innerHTML = step === 4 ? '✓ Submit' : 'Next →';
+  }
+});
+// clear a field's error as soon as the visitor fixes it
+['input', 'change'].forEach(ev => $('reg').addEventListener(ev, e => {
+  e.target.closest('.fg')?.classList.remove('bad');
+  const yn = e.target.closest('.yn'); if (yn) yn.classList.remove('bad');
+}));
+loadInfo();
+</script>
+</body>
+</html>

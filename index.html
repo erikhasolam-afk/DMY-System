@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DMY Dental Clinic</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script>
+/* ── Auth Guard: redirect to login if no active session ── */
+(async () => {
+  try {
+    if (!supabase) { window.location.href = 'login.html'; return; }
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) { window.location.href = 'login.html'; }
+  } catch(e) {
+    window.location.href = 'login.html';
+  }
+})();
+</script>
+<style>
+/* ── Confirmation modal ── */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;}
+.confirm-overlay.open{display:flex;}
+.confirm-box{background:#fff;border-radius:14px;max-width:620px;width:100%;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.3);}
+.confirm-head{padding:16px 20px;border-bottom:1px solid var(--bd);background:linear-gradient(90deg,var(--ol),#fff);display:flex;align-items:center;justify-content:space-between;}
+.confirm-head h3{font-family:var(--fh);font-size:15px;color:var(--td);}
+.confirm-body{padding:18px 20px;overflow-y:auto;flex:1;}
+.confirm-foot{padding:14px 20px;border-top:1px solid var(--bd);display:flex;gap:10px;justify-content:flex-end;background:#fafbfc;}
+.confirm-row{display:grid;grid-template-columns:140px 1fr;gap:10px;padding:7px 0;border-bottom:1px dashed #eef1f2;font-size:12px;}
+.confirm-row:last-child{border-bottom:none;}
+.confirm-row .k{font-family:var(--fh);font-weight:700;color:var(--mu);font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
+.confirm-row .v{color:var(--tx);}
+.confirm-sec{font-family:var(--fh);font-size:12px;font-weight:800;color:var(--o);margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--ol);}
+.confirm-sec:first-child{margin-top:0;}
+/* ── Error field highlight ── */
+.fc.has-error{border-color:#E24B4A !important;background:#FFF5F5 !important;}
+.fc.has-error:focus{border-color:#E24B4A !important;}
+.field-err{color:#E24B4A;font-size:10px;font-weight:600;margin-top:3px;display:none;}
+.field-err.show{display:block;}
+/* ── Edit modal ── */
+.edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;}
+.edit-overlay.open{display:flex;}
+.edit-box{background:#fff;border-radius:14px;max-width:620px;width:100%;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;}
+.edit-head{padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--tl);display:flex;align-items:center;justify-content:space-between;}
+.edit-head h3{font-family:var(--fh);font-size:14px;color:var(--td);}
+.edit-body{padding:16px 18px;overflow-y:auto;flex:1;}
+.edit-foot{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end;background:#fafbfc;}
+.btn-gray{background:#e7eaec;color:var(--tx);}
+.btn-gray:hover{background:#d6dadd;}
+.btn-close{background:transparent;border:none;font-size:18px;color:var(--mu);cursor:pointer;padding:4px 8px;}
+.btn-close:hover{color:var(--tx);}
+/* ── Minor parent/guardian highlight ── */
+.fc.minor-required{border-color:var(--o);box-shadow:0 0 0 3px rgba(244,123,32,.12);}
+.minor-hint{color:var(--o);font-size:10px;font-weight:700;margin-top:3px;display:none;}
+.minor-hint.show{display:block;}
+
+/* ── Upload Options Grid (Images/X-rays) ── */
+.upload-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+.upload-option-card {
+  border: 2px dashed var(--bd);
+  border-radius: 12px;
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .18s;
+  background: var(--bg);
+  user-select: none;
+}
+.upload-option-card:hover {
+  border-color: var(--o);
+  background: var(--ol);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244,123,32,.12);
+}
+.upload-option-icon  { font-size: 36px; margin-bottom: 10px; }
+.upload-option-title { font-family: var(--fh); font-size: 14px; font-weight: 700; color: var(--tx); margin-bottom: 4px; }
+.upload-option-sub   { font-size: 12px; color: var(--mu); }
+@media (max-width: 480px) {
+  .upload-options-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP NAV ═══ -->
+<div class="topnav">
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="hamburger" onclick="toggleSidebar()" id="hamburger-btn">☰</button>
+    <div id="logo-wrap" style="display:flex;align-items:center;cursor:pointer" onclick="document.getElementById('logo-inp').click()" title="Click to upload clinic logo">
+      <div class="logo-icon"><div class="logo-smile"></div></div>
+    </div>
+    <input type="file" id="logo-inp" accept="image/*" style="display:none" onchange="uploadLogo(event)"/>
+    <div>
+      <div class="logo-text"><span class="logo-dmy">DMY</span> <span style="color:var(--tx);font-size:14px;">Dental Clinic</span></div>
+      <div class="logo-sub">Patient Records Management System</div>
+    </div>
+  </div>
+  <div class="topnav-right">
+    <button class="notif-bell" id="notif-bell" onclick="nav('notifications',document.querySelector('.ni[onclick*=notifications]'))" title="Notifications">🔔<span id="notif-bell-count" style="display:none">0</span></button>
+    <span class="topnav-user" id="nav-user-email">Loading…</span>
+    <div class="avatar" id="nav-avatar" style="cursor:pointer" onclick="openProfileModal()" title="Edit Profile">DR</div>
+    <button class="btn btn-o btn-sm" onclick="doLogout()" style="margin-left:6px;font-size:11px">🚪 Logout</button>
+  </div>
+</div>
+
+<div class="app-body">
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="ss">Main</div>
+  <div class="ni active" onclick="nav('dashboard',this)"><span class="ni-ic">🏠</span>Dashboard</div>
+  <div class="ni" onclick="nav('add',this)"><span class="ni-ic">➕</span>Add Patient</div>
+  <div class="ni" onclick="nav('appointments',this)"><span class="ni-ic">📅</span>Appointments</div>
+  <div class="ni" onclick="nav('registrations',this)"><span class="ni-ic">📝</span>Registrations <span id="reg-badge" class="ni-badge" style="display:none">0</span></div>
+  <div class="ss">Records</div>
+  <div class="ni" onclick="nav('patients',this)"><span class="ni-ic">👥</span>Patient List</div>
+  <div class="ni" onclick="nav('physical',this)"><span class="ni-ic">📁</span>Physical Records</div>
+  <div class="ni" onclick="nav('treatment',this)"><span class="ni-ic">📋</span>Treatment Ledger</div>
+  <div class="ni" onclick="nav('chart',this)"><span class="ni-ic">🦷</span>Dental Chart</div>
+  <div class="ni" onclick="nav('xray',this)"><span class="ni-ic">🖼</span>Images / X-Rays</div>
+  <div class="ss">Analytics</div>
+  <div class="ni" onclick="nav('reports',this)"><span class="ni-ic">📊</span>Reports &amp; Financials</div>
+  <div class="ss">Export</div>
+  <div class="ni" onclick="nav('pdf',this)"><span class="ni-ic">📄</span>PDF Export</div>
+  <div class="ss">System</div>
+  <div class="ni" onclick="nav('notifications',this)"><span class="ni-ic">💬</span>Notifications &amp; Settings</div>
+  <div class="ni" onclick="nav('users',this)"><span class="ni-ic">🔐</span>Users &amp; Roles</div>
+  <div class="ss">Patient</div>
+  <div class="ni" onclick="nav('portal',this)"><span class="ni-ic">🙂</span>My Portal</div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-title" id="dash-greeting">Good morning, Dr. Meliza Yap👋</div>
+  <div class="page-subtitle">DMY Dental Clinic — overview for today.</div>
+  <div class="sg">
+    <div class="sc"><div class="sl">Total Patients</div><div class="sv" id="stat-total">0</div><div class="ss2">All time</div></div>
+    <div class="sc"><div class="sl">Today's Appts</div><div class="sv" style="color:var(--t)" id="stat-appt-today">0</div><div class="ss2">Scheduled today</div></div>
+    <div class="sc"><div class="sl">New This Month</div><div class="sv" style="color:#639922" id="stat-new-month">0</div><div class="ss2">This month</div></div>
+    <div class="sc" data-roles="admin,staff"><div class="sl">Collections (Month)</div><div class="sv" style="color:#D85A30" id="dash-revenue">₱0</div><div class="ss2">Payments received − refunds</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="card"><div class="card-title"><span class="ct-ic">📈</span>Monthly Patients</div><div class="chart-wrap"><canvas id="dash-px"></canvas></div></div>
+    <div class="card" data-roles="admin,staff"><div class="card-title"><span class="ct-ic">💰</span>Monthly Collections (₱)</div><div class="chart-wrap"><canvas id="dash-inc"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="ct-ic">📅</span>Today's Appointments <span id="dash-appt-date" style="font-size:11px;color:var(--mu);font-weight:400;margin-left:8px"></span>
+      <button class="btn btn-o btn-sm" style="margin-left:auto" onclick="nav('appointments',document.querySelector('.ni[onclick*=appointments]'))">Open schedule →</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Patient</th><th>Age</th><th>Sex</th><th>Reason / Procedure</th><th>Dentist</th><th>Time / Status</th><th></th></tr></thead>
+    <tbody id="dash-appt-list"></tbody></table></div>
+  </div>
+  <div class="card" data-roles="dentist">
+    <div class="card-title"><span class="ct-ic">🗓</span>My Schedule <span class="sub" style="margin-left:6px">today and the next 7 days</span>
+      <button class="btn btn-o btn-sm" style="margin-left:auto" onclick="nav('appointments',document.querySelector('.ni[onclick*=appointments]'))">Day / week / month view →</button></div>
+    <div id="dash-my-schedule" style="overflow-x:auto"><div class="empty-cell">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ ADD PATIENT ═══════════════ -->
+<div class="page" id="page-add">
+  <div class="page-title">Add New Patient</div>
+  <div class="page-subtitle">Philippine Dental Association — Patient Information Record</div>
+  <div id="form-ok" class="alert al-s" style="display:none">✅ Patient saved successfully!</div>
+  <div class="pda-h">
+    <div class="pda-l">🦷</div>
+    <div><div class="pda-ti">PHILIPPINE DENTAL ASSOCIATION</div><div style="font-size:10px;color:var(--mu)">Patient Information Record — DMY Dental Clinic</div></div>
+    <div style="margin-left:auto;text-align:right"><div style="font-size:10px;color:var(--mu)">Patient ID</div><div style="font-family:var(--fh);font-weight:700;color:var(--o)">#DMY-<span id="new-pid">129</span></div></div>
+  </div>
+  <div class="card"><div class="card-title"><span class="ct-ic">👤</span>Personal Information <span style="font-size:10px;color:var(--mu);font-weight:400">* all starred fields required</span></div>
+    <div class="fr c3">
+      <div class="fg"><label class="fl">Last Name *</label><input class="fc" id="p-last" placeholder="Dela Cruz"/><div class="field-err" id="err-p-last">Required</div></div>
+      <div class="fg"><label class="fl">First Name *</label><input class="fc" id="p-first" placeholder="Juan"/><div class="field-err" id="err-p-first">Required</div></div>
+      <div class="fg"><label class="fl">Middle Name</label><input class="fc" id="p-mid"/></div>
+    </div>
+    <div class="fr c4">
+      <div class="fg"><label class="fl">Birthdate *</label><input class="fc" type="date" id="p-bd"/><div class="field-err" id="err-p-bd">Required</div></div>
+      <div class="fg"><label class="fl">Age</label><input class="fc" type="number" id="p-age" placeholder="auto" readonly style="background:#f5f5f5"/></div>
+      <div class="fg"><label class="fl">Sex *</label><select class="fc" id="p-sex"><option value="">Select</option><option>Male</option><option>Female</option></select><div class="field-err" id="err-p-sex">Required</div></div>
+      <div class="fg"><label class="fl">Nickname</label><input class="fc" id="p-nick"/></div>
+    </div>
+    <div class="fr c2"><div class="fg"><label class="fl">Religion</label><input class="fc" id="p-rel"/></div><div class="fg"><label class="fl">Nationality</label><input class="fc" id="p-nat" value="Filipino"/></div></div>
+    <div class="fr"><div class="fg"><label class="fl">Home Address *</label><input class="fc" id="p-addr" placeholder="Street, Barangay, City/Municipality, Province"/><div class="field-err" id="err-p-addr">Required</div></div></div>
+    <div class="fr c3">
+      <div class="fg"><label class="fl">Occupation</label><input class="fc" id="p-occ"/></div>
+      <div class="fg">
+        <label class="fl">Cell/Mobile No. * <span style="color:var(--mu);font-weight:400">(11 digits)</span></label>
+        <input class="fc" id="p-cell" inputmode="numeric" maxlength="11" placeholder="09171234567"/>
+        <div class="field-err" id="err-p-cell">Must be exactly 11 digits</div>
+      </div>
+      <div class="fg"><label class="fl">Email Address *</label><input class="fc" type="email" id="p-email" placeholder="juan@example.com"/><div class="field-err" id="err-p-email">Valid email required</div></div>
+    </div>
+    <div class="fr c2">
+      <div class="fg"><label class="fl">Dental Insurance</label><input class="fc" id="p-ins"/></div>
+      <div class="fg">
+        <label class="fl" id="p-guard-label">Parent/Guardian <span style="color:var(--mu);font-weight:400">(Required for minors)</span></label>
+        <input class="fc" id="p-guard" placeholder="Name of parent/guardian"/>
+        <div class="minor-hint" id="p-guard-hint">⚠ Patient is a minor — parent/guardian required</div>
+        <div class="field-err" id="err-p-guard">Required for minor patients</div>
+      </div>
+    </div>
+    <div class="fr c2"><div class="fg"><label class="fl">Who referred you?</label><input class="fc" id="p-ref"/></div><div class="fg"><label class="fl">Reason for dental consultation</label><input class="fc" id="p-reason"/></div></div>
+  </div>
+  <div class="card"><div class="card-title"><span class="ct-ic">🦷</span>Dental History</div>
+    <div class="fr c2"><div class="fg"><label class="fl">Previous Dentist Dr.</label><input class="fc" id="p-pdent"/></div><div class="fg"><label class="fl">Last Dental Visit</label><input class="fc" type="date" id="p-lv"/></div></div>
+  </div>
+  <div class="card"><div class="card-title"><span class="ct-ic">🏥</span>Medical History</div>
+    <div class="fr c2"><div class="fg"><label class="fl">Physician Dr.</label><input class="fc" id="p-phys"/></div><div class="fg"><label class="fl">Specialty</label><input class="fc" id="p-spec"/></div></div>
+    <div class="ss3">Health Questions <span style="font-size:10px;color:var(--mu);font-weight:400">* required except #7, #9 &amp; #13</span></div>
+    <div style="display:flex;flex-direction:column;gap:1px">
+      <div class="yn" data-q="q1"><span class="yn-l">1. Are you in good health? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q1" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q1" value="no"/>No</label></div></div>
+      <div class="yn" data-q="q2"><span class="yn-l">2. Under medical treatment now? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q2" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q2" value="no"/>No</label></div></div>
+      <div style="padding:4px 0 6px 12px"><input class="fc" id="q2a" placeholder="Condition being treated"/></div>
+      <div class="yn" data-q="q3"><span class="yn-l">3. Serious illness or surgical operation? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q3" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q3" value="no"/>No</label></div></div>
+      <div style="padding:4px 0 6px 12px"><input class="fc" id="q3a" placeholder="Illness or operation"/></div>
+      <div class="yn" data-q="q4"><span class="yn-l">4. Ever been hospitalized? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q4" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q4" value="no"/>No</label></div></div>
+      <div style="padding:4px 0 6px 12px"><input class="fc" id="q4a" placeholder="When and why"/></div>
+      <div class="yn" data-q="q5"><span class="yn-l">5. Taking any medication? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q5" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q5" value="no"/>No</label></div></div>
+      <div style="padding:4px 0 6px 12px"><input class="fc" id="q5a" placeholder="Please specify"/></div>
+      <div class="yn" data-q="q6"><span class="yn-l">6. Use tobacco products? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q6" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q6" value="no"/>No</label></div></div>
+      <div class="yn" data-q="q7"><span class="yn-l">7. Use alcohol, cocaine or dangerous drugs? <span style="color:var(--mu);font-weight:400">(optional)</span></span><div class="yn-o"><label class="yn-i"><input type="radio" name="q7" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q7" value="no"/>No</label></div></div>
+      <div class="yn" data-q="q8"><span class="yn-l">8. Allergic to: *</span><div style="display:flex;flex-wrap:wrap;gap:6px;flex:1;justify-content:flex-end"><label class="fck"><input type="checkbox" name="q8"/>Lidocaine</label><label class="fck"><input type="checkbox" name="q8"/>Penicillin</label><label class="fck"><input type="checkbox" name="q8"/>Sulfa</label><label class="fck"><input type="checkbox" name="q8"/>Aspirin</label><label class="fck"><input type="checkbox" name="q8"/>Latex</label><label class="fck"><input type="checkbox" name="q8"/>Others</label><label class="fck"><input type="checkbox" name="q8" value="none"/>None</label></div></div>
+      <div class="fr c2" style="margin-top:8px"><div class="fg"><label class="fl">9. Bleeding Time <span style="color:var(--mu);font-weight:400">(optional)</span></label><input class="fc" id="q9" placeholder="e.g. 2-3 min"/></div><div class="fg"><label class="fl">Blood Type <span style="color:var(--mu);font-weight:400">(optional)</span></label><select class="fc" id="p-bt"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div></div>
+      <div class="yn" data-q="q10a"><span class="yn-l">10. Pregnant? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q10a" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q10a" value="no"/>No</label><label class="yn-i"><input type="radio" name="q10a" value="na"/>N/A</label></div></div>
+      <div class="yn" data-q="q10b"><span class="yn-l">Nursing? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q10b" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q10b" value="no"/>No</label><label class="yn-i"><input type="radio" name="q10b" value="na"/>N/A</label></div></div>
+      <div class="yn" data-q="q10c"><span class="yn-l">Birth control pills? *</span><div class="yn-o"><label class="yn-i"><input type="radio" name="q10c" value="yes"/>Yes</label><label class="yn-i"><input type="radio" name="q10c" value="no"/>No</label><label class="yn-i"><input type="radio" name="q10c" value="na"/>N/A</label></div></div>
+    </div>
+    <div class="ss3">13. Check all that apply <span style="font-size:10px;color:var(--mu);font-weight:400">(optional)</span></div>
+    <div class="fcg" style="gap:5px 14px">
+      <label class="fck"><input type="checkbox" name="q13"/>High Blood Pressure</label><label class="fck"><input type="checkbox" name="q13"/>Low Blood Pressure</label><label class="fck"><input type="checkbox" name="q13"/>Epilepsy/Convulsions</label><label class="fck"><input type="checkbox" name="q13"/>AIDS/HIV</label><label class="fck"><input type="checkbox" name="q13"/>STD</label><label class="fck"><input type="checkbox" name="q13"/>Stomach Troubles/Ulcers</label><label class="fck"><input type="checkbox" name="q13"/>Fainting Seizure</label><label class="fck"><input type="checkbox" name="q13"/>Rapid Weight Loss</label><label class="fck"><input type="checkbox" name="q13"/>Radiation Therapy</label><label class="fck"><input type="checkbox" name="q13"/>Joint Replacement/Implant</label><label class="fck"><input type="checkbox" name="q13"/>Heart Surgery</label><label class="fck"><input type="checkbox" name="q13"/>Heart Attack</label><label class="fck"><input type="checkbox" name="q13"/>Thyroid Problem</label><label class="fck"><input type="checkbox" name="q13"/>Heart Disease</label><label class="fck"><input type="checkbox" name="q13"/>Heart Murmur</label><label class="fck"><input type="checkbox" name="q13"/>Hepatitis/Liver Disease</label><label class="fck"><input type="checkbox" name="q13"/>Rheumatic Fever</label><label class="fck"><input type="checkbox" name="q13"/>Hay Fever/Allergies</label><label class="fck"><input type="checkbox" name="q13"/>Respiratory Problems</label><label class="fck"><input type="checkbox" name="q13"/>Tuberculosis</label><label class="fck"><input type="checkbox" name="q13"/>Kidney Disease</label><label class="fck"><input type="checkbox" name="q13"/>Diabetes</label><label class="fck"><input type="checkbox" name="q13"/>Chest Pain</label><label class="fck"><input type="checkbox" name="q13"/>Stroke</label><label class="fck"><input type="checkbox" name="q13"/>Cancer/Tumors</label><label class="fck"><input type="checkbox" name="q13"/>Anemia</label><label class="fck"><input type="checkbox" name="q13"/>Angina</label><label class="fck"><input type="checkbox" name="q13"/>Asthma</label><label class="fck"><input type="checkbox" name="q13"/>Emphysema</label><label class="fck"><input type="checkbox" name="q13"/>Bleeding Problems</label><label class="fck"><input type="checkbox" name="q13"/>Blood Diseases</label><label class="fck"><input type="checkbox" name="q13"/>Head Injuries</label><label class="fck"><input type="checkbox" name="q13"/>Arthritis/Rheumatism</label>
+    </div>
+    <div class="fg" style="margin-top:10px"><label class="fl">Signature</label><input class="fc" id="p-sig" placeholder="Full name as e-signature"/></div>
+  </div>
+  <div class="bg"><button class="btn btn-p" onclick="savePatient()">💾 Review &amp; Save Patient</button><button class="btn btn-o" onclick="clearAddForm()">🗑 Clear</button></div>
+</div>
+
+<!-- ═══════════════ PATIENT LIST ═══════════════ -->
+<div class="page" id="page-patients">
+  <div class="page-title">Patient List</div>
+  <div class="page-subtitle">All registered patients — filter by date range.</div>
+
+  <div class="date-filter-bar">
+    <div class="date-tabs">
+      <button class="date-tab active" onclick="setFilterMode('all',this)">All</button>
+      <button class="date-tab" onclick="setFilterMode('year',this)">By Year</button>
+      <button class="date-tab" onclick="setFilterMode('month',this)">By Month</button>
+      <button class="date-tab" onclick="setFilterMode('week',this)">By Week</button>
+    </div>
+    <div id="date-filter-controls" style="display:flex;align-items:center;gap:8px"></div>
+  </div>
+
+  <div class="sbar">
+    <input class="si" type="text" placeholder="Search by name, ID, phone..." oninput="filterPxList(this.value)"/>
+    <label class="fck" data-roles="dentist" style="white-space:nowrap"><input type="checkbox" id="px-mine" onchange="renderPxList()"/> My patients only</label>
+    <button class="btn btn-p" data-can="editPatient" onclick="nav('add',null)">➕ New</button>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Sex</th><th>Mobile</th><th>Registered</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="px-list"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ TREATMENT RECORDS ═══════════════ -->
+<div class="page" id="page-treatment">
+  <div class="page-title">Treatment Ledger</div>
+  <div class="page-subtitle">Each entry is a <b>charge</b>. Money received is recorded as a <b>payment</b> with a receipt number — balances update automatically.</div>
+  <div class="card"><div class="card-title"><span class="ct-ic">👤</span>Patient</div>
+    <div class="fr c3">
+      <div class="fg" style="position:relative">
+        <label class="fl">Name <span style="color:var(--t)">(type to search)</span></label>
+        <input class="fc" id="tr-nm" placeholder="e.g. Juan Dela Cruz" autocomplete="off" oninput="document.getElementById('tx-autocomplete').style.display='block'"/>
+        <div id="tx-autocomplete" class="ac-dropdown" style="display:none"></div>
+      </div>
+      <div class="fg"><label class="fl">Age</label><input class="fc" type="number" id="tr-ag"/></div>
+      <div class="fg"><label class="fl">Sex</label><select class="fc" id="tr-gn"><option value="">Select</option><option>Male</option><option>Female</option></select></div>
+    </div>
+  </div>
+  <div class="card" data-can="addTreatment"><div class="card-title"><span class="ct-ic">➕</span>New Treatment Entry</div>
+    <div class="fr c4">
+      <div class="fg">
+        <label class="fl">Date <span style="color:var(--mu);font-weight:400;text-transform:none;letter-spacing:0">(today by default — change for past records)</span></label>
+        <input class="fc" type="date" id="tr-dt"/>
+      </div>
+      <div class="fg"><label class="fl">Tooth No.</label><input class="fc" id="tr-tn" placeholder="e.g. 11,12"/></div>
+      <div class="fg">
+        <label class="fl">Procedure</label>
+        <select class="fc" id="tr-pr" onchange="onProcedureChange()">
+          <option value="">— Select procedure —</option>
+          <optgroup label="Preventive">
+            <option>Cleaning/Prophylaxis</option>
+            <option>Oral Examination</option>
+            <option>Fluoride Treatment</option>
+            <option>Sealants</option>
+          </optgroup>
+          <optgroup label="Restorative">
+            <option>Amalgam Filling</option>
+            <option>Composite Filling</option>
+            <option>Pit &amp; Fissure Sealant</option>
+            <option>Inlay/Onlay</option>
+            <option>Jacket Crown</option>
+            <option>Bridge</option>
+          </optgroup>
+          <optgroup label="Surgical">
+            <option>Extraction (Simple)</option>
+            <option>Extraction (Surgical)</option>
+            <option>Odontectomy</option>
+            <option>Wisdom Tooth Removal</option>
+          </optgroup>
+          <optgroup label="Endodontic">
+            <option>Root Canal Treatment</option>
+            <option>Pulpotomy</option>
+            <option>Apicoectomy</option>
+          </optgroup>
+          <optgroup label="Orthodontic">
+            <option>Orthodontic Adj.</option>
+            <option>Braces Fitting</option>
+            <option>Retainer Fitting</option>
+          </optgroup>
+          <optgroup label="Periodontal">
+            <option>Scaling &amp; Root Planing</option>
+            <option>Gum Treatment</option>
+          </optgroup>
+          <optgroup label="Cosmetic">
+            <option>Teeth Whitening</option>
+            <option>Veneers</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option>Consultation</option>
+            <option>X-Ray</option>
+            <option value="__other__">Other (specify…)</option>
+          </optgroup>
+        </select>
+        <input class="fc" id="tr-pr-custom" placeholder="Specify procedure…" style="display:none;margin-top:6px"/>
+      </div>
+      <div class="fg"><label class="fl">Dentist</label><input class="fc" id="tr-den" list="dl-dentists" placeholder="Dr. Santos"/></div>
+    </div>
+    <div class="fr c4">
+      <div class="fg"><label class="fl">Charged (₱)</label><input class="fc" type="number" min="0" step="0.01" id="tr-ch" oninput="calcBal()"/></div>
+      <div class="fg"><label class="fl">Discount (₱)</label><input class="fc" type="number" min="0" step="0.01" id="tr-disc" oninput="calcBal()" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Payment now (₱) <span style="color:var(--mu);font-weight:400;text-transform:none">optional</span></label><input class="fc" type="number" min="0" step="0.01" id="tr-pd" oninput="calcBal()" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Balance after (₱)</label><input class="fc" id="tr-bl" readonly style="background:#f5f5f5"/></div>
+    </div>
+    <div class="fr c4">
+      <div class="fg"><label class="fl">Payment method</label><select class="fc" id="tr-method" onchange="calcBal()"><option>Cash</option></select></div>
+      <div class="fg"><label class="fl">Reference no. <span id="tr-ref-req" style="color:var(--o)"></span></label><input class="fc" id="tr-ref" placeholder="GCash / card / check ref"/></div>
+      <div class="fg"><label class="fl">Branch</label><select class="fc" id="tr-branch" data-ref="branch"><option value="">— Branch —</option></select></div>
+      <div class="fg"><label class="fl">Next Appt. (follow-up)</label><input class="fc" type="date" id="tr-nx"/></div>
+    </div>
+    <div class="fg"><label class="fl">Notes</label><input class="fc" id="tr-notes" placeholder="Optional clinical / billing note"/></div>
+    <div class="bg"><button class="btn btn-p" id="tr-save-btn" onclick="addTx()">💾 Add Entry</button>
+      <span class="sub" style="align-self:center">More payments, refunds and corrections: use 💳 / 🧾 on each row below.</span></div>
+  </div>
+  <div class="card"><div class="card-title"><span class="ct-ic">📋</span>Treatment History</div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Tooth</th><th>Procedure</th><th>Dentist</th><th>Charged</th><th>Disc.</th><th>Paid</th><th>Balance</th><th>Next Appt.</th><th></th></tr></thead>
+    <tbody id="tx-body">
+      <tr><td colspan="10" style="text-align:center;color:var(--mu);padding:20px;font-size:12px">Type a patient name above to load their treatment history.</td></tr>
+    </tbody></table></div>
+    <div class="ledger-totals">
+      <div><span>Net charges</span><b id="tx-total-net">₱0.00</b></div>
+      <div><span>Collected</span><b id="tx-total-paid" style="color:#3B6D11">₱0.00</b></div>
+      <div><span>Balance</span><b id="tx-total-bal" style="color:var(--o)">₱0.00</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DENTAL CHART ═══════════════ -->
+<div class="page" id="page-chart">
+  <div class="page-title">Dental Record Chart</div>
+  <div class="page-subtitle">Click any tooth to mark its condition. Right-click to clear it.</div>
+  <div class="card" id="dental-chart-card">
+    <div class="card-title"><span class="ct-ic">📋</span>Intraoral Examination</div>
+    <div class="fr c3">
+      <div class="fg" style="position:relative">
+        <label class="fl">Patient Name <span style="color:var(--t)">(type to search)</span></label>
+        <input class="fc" id="dc-nm" placeholder="e.g. Juan Dela Cruz" autocomplete="off" oninput="chartPatientSearch(this.value)"/>
+        <div id="dc-autocomplete" class="ac-dropdown" style="display:none"></div>
+      </div>
+      <div class="fg"><label class="fl">Age</label><input class="fc" type="number" id="dc-ag"/></div>
+      <div class="fg"><label class="fl">Date</label><input class="fc" type="date" id="dc-dt"/></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;font-family:var(--fh)">MARK AS:</div>
+    <div class="tool-bar" id="toolBar">
+      <button class="tool-btn active-tool" id="tool-P"   onclick="setTool('P')"   style="background:#EAF3DE;color:#3B6D11;border-color:#639922">✓ Present</button>
+      <button class="tool-btn"             id="tool-D"   onclick="setTool('D')"   style="background:#FAECE7;color:#D85A30;border-color:#D85A30">D Decayed</button>
+      <button class="tool-btn"             id="tool-M"   onclick="setTool('M')"   style="background:#F1EFE8;color:#888;border-color:#aaa">M Missing</button>
+      <button class="tool-btn"             id="tool-X"   onclick="setTool('X')"   style="background:#FCEBEB;color:#E24B4A;border-color:#E24B4A">X Extracted</button>
+      <button class="tool-btn"             id="tool-F"   onclick="setTool('F')"   style="background:var(--ol);color:var(--o);border-color:var(--o)">Am/Co Filled</button>
+      <button class="tool-btn"             id="tool-C"   onclick="setTool('C')"   style="background:var(--tl);color:var(--td);border-color:var(--t)">JC Crown</button>
+      <button class="tool-btn"             id="tool-Im"  onclick="setTool('Im')"  style="background:#EEEDFE;color:#534AB7;border-color:#7F77DD">Im Implant</button>
+      <button class="tool-btn"             id="tool-CLR" onclick="setTool('CLR')" style="background:#f0f0f0;color:#888;border-color:#ccc">⊘ Clear</button>
+    </div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:14px">💡 Left-click = apply mark &nbsp;|&nbsp; Right-click = clear tooth</div>
+    <div class="tooth-grid" style="padding:6px 4px">
+
+      <div style="text-align:center;font-size:11px;color:var(--mu);font-weight:700;letter-spacing:.5px;margin-bottom:3px">UPPER PERMANENT</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;width:100%">
+        <div style="font-size:11px;color:var(--mu);font-weight:700;white-space:nowrap">RIGHT →</div>
+        <div style="flex:1;height:1px;background:var(--bd);opacity:.5"></div>
+        <div style="font-size:11px;color:var(--mu);font-weight:700;white-space:nowrap">← LEFT</div>
+      </div>
+      <div class="tr" id="row-pu"></div>
+
+      <div style="height:14px"></div>
+
+      <div style="text-align:center;font-size:11px;color:var(--mu);font-weight:700;letter-spacing:.5px;margin-bottom:3px">UPPER DECIDUOUS</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;width:100%">
+        <div style="font-size:11px;color:var(--mu);font-weight:700;white-space:nowrap">RIGHT →</div>
+        <div style="flex:1;height:1px;background:var(--bd);opacity:.5"></div>
+        <div style="font-size:11px;color:var(--mu);font-weight:700;white-space:nowrap">← LEFT</div>
+      </div>
+      <div class="tr" id="row-tu"></div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:14px 0;width:100%">
+        <div style="flex:1;height:2px;background:linear-gradient(90deg,transparent,#c0d4de)"></div>
+        <div style="width:8px;height:8px;background:var(--bd);border-radius:50%"></div>
+        <div style="flex:1;height:2px;background:linear-gradient(90deg,#c0d4de,transparent)"></div>
+      </div>
+
+      <div style="text-align:center;font-size:11px;color:var(--mu);font-weight:700;letter-spacing:.5px;margin-bottom:3px">LOWER DECIDUOUS</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;width:100%">
+        <div style="font-size:11px;color:var(--mu);font-weight:700;white-space:nowrap">RIGHT →</div>
+        <div style="flex:1;height:1px;background:var(--bd);opacity:.5"></div>
+        <div style="font-size:11px;color:var(--mu);font-weight:700;white-space:nowrap">← LEFT</div>
+      </div>
+      <div class="tr" id="row-tl"></div>
+
+      <div style="height:14px"></div>
+
+      <div style="text-align:center;font-size:11px;color:var(--mu);font-weight:700;letter-spacing:.5px;margin-bottom:3px">LOWER PERMANENT</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;width:100%">
+        <div style="font-size:11px;color:var(--mu);font-weight:700;white-space:nowrap">RIGHT →</div>
+        <div style="flex:1;height:1px;background:var(--bd);opacity:.5"></div>
+        <div style="font-size:11px;color:var(--mu);font-weight:700;white-space:nowrap">← LEFT</div>
+      </div>
+      <div class="tr" id="row-pl"></div>
+
+    </div>
+    <div class="chart-hl" style="margin-top:12px">
+      <div class="hl-dot" style="background:#EAF3DE;border:1.5px solid #639922"></div><span>Present</span>
+      <div class="hl-dot" style="background:#FAECE7;border:1.5px solid #D85A30"></div><span>Decayed</span>
+      <div class="hl-dot" style="background:#F1EFE8;border:1.5px solid #aaa;opacity:.7"></div><span>Missing</span>
+      <div class="hl-dot" style="background:#FCEBEB;border:1.5px solid #E24B4A"></div><span>Extracted</span>
+      <div class="hl-dot" style="background:var(--ol);border:1.5px solid var(--o)"></div><span>Filled</span>
+      <div class="hl-dot" style="background:var(--tl);border:1.5px solid var(--t)"></div><span>Crown</span>
+      <div class="hl-dot" style="background:#EEEDFE;border:1.5px solid #7F77DD"></div><span>Implant</span>
+    </div>
+    <hr style="border:none;border-top:1px dashed var(--bd);margin:14px 0"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+      <div><div class="ss3">Periodontal</div><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="perio"/>Gingivitis</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="perio"/>Early Periodontitis</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="perio"/>Moderate Periodontitis</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="perio"/>Advanced Periodontitis</label></div>
+      <div><div class="ss3">Occlusion</div><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="occl"/>Class (Molar)</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="occl"/>Overjet</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="occl"/>Overbite</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="occl"/>Midline Deviation</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="occl"/>Crossbite</label></div>
+      <div><div class="ss3">Appliances</div><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="appl"/>Orthodontic</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="appl"/>Stayplate</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="appl"/>Others</label></div>
+      <div><div class="ss3">TMD</div><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="tmd"/>Clenching</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="tmd"/>Clicking</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="tmd"/>Trismus</label><label class="fck" style="display:flex;margin-bottom:4px"><input type="checkbox" name="tmd"/>Muscle Spasm</label></div>
+    </div>
+    <div class="bg"><button class="btn btn-p" onclick="saveChart()">💾 Save Chart</button><button class="btn btn-o" onclick="resetChart()">🔄 Reset All</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════ IMAGES / X-RAYS ═══════════════ -->
+<div class="page" id="page-xray">
+  <div class="page-title">Patient Images &amp; X-Rays</div>
+  <div class="page-subtitle">Search for a patient, upload images, then Save to attach them. Click any image to enlarge.</div>
+  <div class="card">
+    <div class="card-title"><span class="ct-ic">👤</span>Select Patient &amp; Upload</div>
+    <div class="fr c2">
+      <div class="fg" style="position:relative">
+        <label class="fl">Patient <span style="color:var(--t)">(type to search)</span></label>
+        <input class="fc" id="xr-px" placeholder="e.g. Juan Dela Cruz" autocomplete="off" oninput="xrayPatientSearch(this.value)"/>
+        <div id="xr-autocomplete" class="ac-dropdown" style="display:none"></div>
+        <div class="field-err" id="err-xr-px">Please search and select a patient first</div>
+      </div>
+      <div class="fg"><label class="fl">Image Type</label>
+        <select class="fc" id="xr-type">
+          <option>Periapical X-ray</option><option>Panoramic X-ray</option><option>Cephalometric X-ray</option><option>Occlusal X-ray</option><option>Intraoral Photo</option><option>Extraoral Photo</option><option>Before Treatment</option><option>After Treatment</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Notes / Description</label><input class="fc" id="xr-note" placeholder="e.g. Post-extraction, tooth #36"/></div>
+
+    <div class="upload-options-grid">
+      <!-- Camera Capture -->
+      <div class="upload-option-card" onclick="triggerCameraCapture()" title="Take a photo using your device camera">
+        <input type="file" id="xr-camera" accept="image/*" capture="environment" onchange="queueImages(event)" style="display:none"/>
+        <div class="upload-option-icon">📷</div>
+        <div class="upload-option-title">Camera Capture</div>
+        <div class="upload-option-sub">Take a photo with your device camera</div>
+      </div>
+      <!-- File Upload -->
+      <div class="upload-option-card" onclick="document.getElementById('xr-inp').click()" title="Select image files from your device">
+        <input type="file" id="xr-inp" accept="image/*" multiple onchange="queueImages(event)" style="display:none"/>
+        <div class="upload-option-icon">🖼</div>
+        <div class="upload-option-title">File Upload</div>
+        <div class="upload-option-sub">Choose X-rays or photos from your device</div>
+      </div>
+    </div>
+    <div class="bg" style="margin-top:10px">
+      <button class="btn btn-p" onclick="saveImages()">💾 Save Images</button>
+      <button class="btn btn-o" onclick="clearImageForm()">🗑 Clear</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="ct-ic">📁</span>Image Gallery <span id="img-cnt" style="font-size:11px;color:var(--mu);font-weight:400;margin-left:6px">(0 images)</span></div>
+    <div id="img-empty" style="font-size:12px;color:var(--mu);text-align:center;padding:24px">Search for a patient and upload images to see them here.</div>
+    <div class="img-gallery" id="img-gallery"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ REPORTS ═══════════════ -->
+<div class="page" id="page-reports">
+  <div class="page-title">Reports &amp; Financials</div>
+  <div class="page-subtitle">Patient trends and financial reports built from the treatment ledger and actual payment records.</div>
+  <div class="sg">
+    <div class="sc"><div class="sl">Net Collections (Month)</div><div class="sv" id="rpt-revenue">₱0</div><div class="ss2">Payments received − refunds</div></div>
+    <div class="sc"><div class="sl">Total Patients</div><div class="sv" style="color:var(--t)" id="rpt-total-px">0</div><div class="ss2">All time</div></div>
+    <div class="sc"><div class="sl">Outstanding Balance</div><div class="sv" style="color:#D85A30" id="rpt-balance">₱0</div><div class="ss2">Still owed, all time</div></div>
+    <div class="sc"><div class="sl">New Patients</div><div class="sv" style="color:#639922" id="rpt-new-px">0</div><div class="ss2">This month</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="card"><div class="card-title"><span class="ct-ic">📈</span>Monthly New Patients</div><div class="chart-wrap-tall"><canvas id="rpt-px"></canvas></div></div>
+    <div class="card"><div class="card-title"><span class="ct-ic">💰</span>Monthly Net Collections (₱)</div><div class="chart-wrap-tall"><canvas id="rpt-inc"></canvas></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr;gap:16px">
+    <div class="card"><div class="card-title"><span class="ct-ic">👥</span>Patient Demographics</div><div class="chart-wrap-tall"><canvas id="rpt-demo"></canvas></div></div>
+  </div>
+
+  <!-- ═══ FINANCIAL REPORTS (from treatment ledger + payment records) ═══ -->
+  <div class="fin-head">
+    <div class="page-title" style="font-size:21px;margin:8px 0 2px">💹 Sales, Income &amp; Financial Reports</div>
+    <div class="page-subtitle" style="margin-bottom:12px">Charges are counted by treatment date; collections by the date the money was received. <b>Collections are not profit</b> — net income = net collections − recorded expenses.</div>
+  </div>
+  <div class="card fin-filters">
+    <div class="fg"><label class="fl">Period</label>
+      <select class="fc" id="fr-preset" onchange="frPresetChange()">
+        <option value="today">Today</option><option value="week">This week</option><option value="month" selected>This month</option>
+        <option value="lastmonth">Last month</option><option value="year">This year</option><option value="custom">Custom</option>
+      </select></div>
+    <div class="fg"><label class="fl">From</label><input class="fc" type="date" id="fr-from" onchange="document.getElementById('fr-preset').value='custom';renderFinancialReport()"/></div>
+    <div class="fg"><label class="fl">To</label><input class="fc" type="date" id="fr-to" onchange="document.getElementById('fr-preset').value='custom';renderFinancialReport()"/></div>
+    <div class="fg"><label class="fl">Group by</label>
+      <select class="fc" id="fr-group" onchange="renderFinancialReport()"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option></select></div>
+    <div class="fg"><label class="fl">Branch</label><select class="fc" id="fr-branch" data-ref="branch" data-placeholder="All branches" onchange="renderFinancialReport()"><option value="">All branches</option></select></div>
+    <div class="fg"><label class="fl">Category</label><select class="fc" id="fr-category" onchange="renderFinancialReport()"><option value="">All categories</option></select></div>
+    <div class="fin-actions">
+      <button class="btn btn-p btn-sm" onclick="exportFinancialPDF()">📄 Export PDF</button>
+      <button class="btn btn-o btn-sm" onclick="exportFinancialCSV()">⬇ CSV</button>
+      <button class="btn btn-gray btn-sm" title="Reload from database" onclick="Promise.all([loadAllTreatmentsFromSupabase(),loadPaymentsFromSupabase(),loadExpensesFromSupabase()]).then(renderFinancialReport)">↻</button>
+    </div>
+  </div>
+
+  <div class="sg" id="fr-cards"></div>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:0">
+    <div class="card"><div class="card-title"><span class="ct-ic">📊</span>Net Charges vs Net Collections</div><div class="chart-wrap-tall"><canvas id="fr-period-chart"></canvas></div></div>
+    <div class="card"><div class="card-title"><span class="ct-ic">💳</span>Collections by Method</div><div class="chart-wrap-tall"><canvas id="fr-method-chart"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ct-ic">🗓</span>Daily / Weekly / Monthly Breakdown</div>
+    <div style="overflow-x:auto"><table class="num-table"><thead><tr><th>Period</th><th>Gross charges</th><th>Discounts</th><th>Net charges</th><th>Collections</th><th>Refunds</th><th>Net collections</th><th>Expenses</th></tr></thead>
+    <tbody id="fr-period-table"></tbody></table></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card"><div class="card-title"><span class="ct-ic">🦷</span>By Treatment Category</div>
+      <div style="overflow-x:auto"><table class="num-table"><thead><tr><th>Category</th><th>Procedures</th><th>Net charges</th><th>Net collections</th><th>Outstanding</th></tr></thead><tbody id="fr-category-table"></tbody></table></div></div>
+    <div class="card"><div class="card-title"><span class="ct-ic">💳</span>Collections by Payment Method</div>
+      <div style="overflow-x:auto"><table class="num-table"><thead><tr><th>Method</th><th>Collections</th><th>Refunds</th><th>Net</th><th>Share</th></tr></thead><tbody id="fr-method-table"></tbody></table></div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card"><div class="card-title"><span class="ct-ic">🏥</span>Revenue by Branch</div>
+      <div style="overflow-x:auto"><table class="num-table"><thead><tr><th>Branch</th><th>Net charges</th><th>Net collections</th><th>Outstanding</th><th>Expenses</th></tr></thead><tbody id="fr-branch-table"></tbody></table></div></div>
+    <div class="card"><div class="card-title"><span class="ct-ic">⏳</span>Outstanding Balances <span class="sub" style="margin-left:6px">(charges in period)</span></div>
+      <div style="overflow-x:auto;max-height:340px;overflow-y:auto"><table class="num-table"><thead><tr><th>Patient</th><th>Entries</th><th>Oldest</th><th>Age</th><th>Owed</th></tr></thead><tbody id="fr-outstanding-table"></tbody></table></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ct-ic">📈</span>Monthly / Yearly Comparison</div>
+    <div class="chart-wrap" style="margin-bottom:14px"><canvas id="fr-compare-chart"></canvas></div>
+    <div style="overflow-x:auto"><table class="num-table"><thead id="fr-compare-head"></thead><tbody id="fr-compare-table"></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ct-ic">🧾</span>Expenses <span class="sub" style="margin-left:6px">used only for net income</span>
+      <button class="btn btn-p btn-sm" style="margin-left:auto" onclick="openExpenseDialog()">➕ Record Expense</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Branch</th><th>Recorded by</th><th>Amount</th><th></th></tr></thead><tbody id="fr-expense-table"></tbody></table></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ APPOINTMENTS ═══════════════ -->
+<div class="page" id="page-appointments">
+  <div class="page-title">Appointments</div>
+  <div class="page-subtitle">Book, reschedule and track visits. Double-booking a dentist is blocked automatically.</div>
+  <div class="sg">
+    <div class="sc"><div class="sl">Today</div><div class="sv" style="color:var(--t)" id="appt-stat-today">0</div><div class="ss2">Scheduled / confirmed</div></div>
+    <div class="sc"><div class="sl">Next 7 Days</div><div class="sv" id="appt-stat-upcoming">0</div><div class="ss2">Upcoming</div></div>
+    <div class="sc"><div class="sl">This Month</div><div class="sv" style="color:#639922" id="appt-stat-month">0</div><div class="ss2">Excluding cancelled</div></div>
+    <div class="sc"><div class="sl">No-Shows</div><div class="sv" style="color:#D85A30" id="appt-stat-noshow">0</div><div class="ss2">This month</div></div>
+  </div>
+
+  <div class="card appt-toolbar">
+    <div class="date-tabs" id="appt-view-tabs">
+      <button class="date-tab" data-v="day" onclick="setApptView('day',this)">Day</button>
+      <button class="date-tab active" data-v="week" onclick="setApptView('week',this)">Week</button>
+      <button class="date-tab" data-v="month" onclick="setApptView('month',this)">Month</button>
+      <button class="date-tab" data-v="list" onclick="setApptView('list',this)">List</button>
+    </div>
+    <div id="appt-nav" style="display:flex;align-items:center;gap:6px">
+      <button class="pf-nav" onclick="apptNav(-1)">◀</button>
+      <button class="pf-nav" onclick="apptNav(0)">Today</button>
+      <button class="pf-nav" onclick="apptNav(1)">▶</button>
+      <div class="pf-label" id="appt-label"></div>
+      <input class="fc" type="date" id="appt-f-date" title="Jump to date" onchange="apptFilterChange()" style="padding:6px 8px"/>
+    </div>
+    <button class="btn btn-p" data-can="bookAppt" style="margin-left:auto" onclick="openApptDialog()">➕ New Appointment</button>
+  </div>
+  <div class="appt-filters">
+    <select class="fc" id="appt-f-dentist" data-ref="dentist" data-placeholder="All dentists" onchange="apptFilterChange()"><option value="">All dentists</option></select>
+    <select class="fc" id="appt-f-branch" data-ref="branch" data-placeholder="All branches" onchange="apptFilterChange()"><option value="">All branches</option></select>
+    <select class="fc" id="appt-f-status" onchange="apptFilterChange()"><option value="">All statuses</option></select>
+    <input class="fc" id="appt-f-search" placeholder="Search patient or reason…" oninput="apptFilterChange()"/>
+    <div id="appt-range-filters" style="display:none;gap:6px;align-items:center">
+      <input class="fc" type="date" id="appt-f-from" onchange="apptFilterChange()" title="From"/>
+      <span class="sub">to</span>
+      <input class="fc" type="date" id="appt-f-to" onchange="apptFilterChange()" title="To"/>
+    </div>
+  </div>
+  <div class="card" id="appt-view"></div>
+  <div class="appt-legend">
+    <span><i style="background:#3A9EA5"></i>Scheduled</span><span><i style="background:#639922"></i>Confirmed</span>
+    <span><i style="background:#999"></i>Completed</span><span><i style="background:#E24B4A"></i>Cancelled</span><span><i style="background:#F47B20"></i>No-Show</span>
+  </div>
+</div>
+
+<!-- ═══════════════ PATIENT PROFILE ═══════════════ -->
+<div class="page" id="page-profile">
+  <div style="margin-bottom:10px"><button class="btn btn-gray btn-sm" onclick="nav('patients',document.querySelector('.ni[onclick*=patients]'))">← Patient List</button></div>
+  <div id="profile-body"></div>
+</div>
+
+<!-- ═══════════════ NOTIFICATIONS & SETTINGS ═══════════════ -->
+<div class="page" id="page-notifications">
+  <div class="page-title">Notifications &amp; Settings</div>
+  <div class="page-subtitle">Every SMS and e-mail the system sends — with delivery status, retries and errors.</div>
+
+  <div class="card">
+    <div class="card-title"><span class="ct-ic">🔌</span>Providers <button class="btn btn-gray btn-sm" style="margin-left:auto" onclick="checkProviderStatus()">↻ Check</button></div>
+    <div id="notif-provider-status" class="prov-wrap"></div>
+  </div>
+
+  <div class="sg">
+    <div class="sc"><div class="sl">Sent</div><div class="sv" style="color:#3B6D11" id="nf-stat-sent">0</div><div class="ss2">Accepted by provider</div></div>
+    <div class="sc"><div class="sl">Queued</div><div class="sv" style="color:var(--t)" id="nf-stat-pending">0</div><div class="ss2">Waiting / retrying</div></div>
+    <div class="sc"><div class="sl">Failed</div><div class="sv" style="color:#B91C1C" id="nf-stat-failed">0</div><div class="ss2">Needs attention</div></div>
+    <div class="sc"><div class="sl">Skipped</div><div class="sv" style="color:var(--mu)" id="nf-stat-skipped">0</div><div class="ss2">No contact info / cancelled</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ct-ic">💬</span>Message Log
+      <span style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn btn-s btn-sm" onclick="sendQueuedNow(this)">📤 Send queued now</button>
+        <button class="btn btn-gray btn-sm" onclick="loadNotifications()">↻</button>
+      </span></div>
+    <div class="appt-filters" style="margin-bottom:12px">
+      <select class="fc" id="nf-status" onchange="notifFilterChange()"><option value="">All statuses</option><option>pending</option><option>sent</option><option>failed</option><option>skipped</option></select>
+      <select class="fc" id="nf-type" onchange="notifFilterChange()"><option value="">All types</option><option value="confirmation">Confirmation</option><option value="reminder">Reminder</option><option value="reschedule">Reschedule</option><option value="cancellation">Cancellation</option><option value="manual_reminder">Manual reminder</option></select>
+      <select class="fc" id="nf-channel" onchange="notifFilterChange()"><option value="">SMS + e-mail</option><option value="sms">SMS</option><option value="email">E-mail</option></select>
+      <input class="fc" id="nf-search" placeholder="Search patient / number / e-mail…" oninput="notifFilterChange()"/>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Queued</th><th>Patient</th><th>Type</th><th>Channel</th><th>To</th><th>Status</th><th>Detail</th><th>Message</th><th></th></tr></thead>
+    <tbody id="notif-log"></tbody></table></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" data-can="settings">
+    <div class="card">
+      <div class="card-title"><span class="ct-ic">⚙️</span>Notification Settings</div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Clinic name (in messages)</label><input class="fc" id="ns-clinic"/></div>
+        <div class="fg"><label class="fl">Clinic phone (in messages)</label><input class="fc" id="ns-phone" placeholder="e.g. 0917 000 0000"/></div>
+      </div>
+      <div class="fg" style="margin-bottom:12px"><label class="fl">Clinic address (on receipts)</label><input class="fc" id="ns-address"/></div>
+      <div class="fr c2">
+        <label class="fck"><input type="checkbox" id="ns-sms"/> Send SMS (Semaphore)</label>
+        <label class="fck"><input type="checkbox" id="ns-email"/> Send e-mail</label>
+      </div>
+      <div class="ss3">Send automatically when an appointment is…</div>
+      <div class="fcg" style="gap:8px 18px;margin-bottom:12px">
+        <label class="fck"><input type="checkbox" id="ns-create"/> booked (confirmation)</label>
+        <label class="fck"><input type="checkbox" id="ns-resched"/> rescheduled</label>
+        <label class="fck"><input type="checkbox" id="ns-cancel"/> cancelled</label>
+      </div>
+      <div class="fg" style="max-width:240px"><label class="fl">Reminder — hours before appointment</label><input class="fc" type="number" min="1" max="168" id="ns-hours"/></div>
+      <div class="ss3">Online registration &amp; clinic hours</div>
+      <label class="fck" style="margin-bottom:10px"><input type="checkbox" id="ns-public"/> Allow online registration / appointment requests</label>
+      <div class="fr c3">
+        <div class="fg"><label class="fl">Opens</label><input class="fc" type="time" id="ns-open"/></div>
+        <div class="fg"><label class="fl">Closes</label><input class="fc" type="time" id="ns-close"/></div>
+        <div class="fg"><label class="fl">Slot (minutes)</label><input class="fc" type="number" min="10" max="240" step="5" id="ns-slot"/></div>
+      </div>
+      <div class="fg"><label class="fl">Closed on</label><div class="fcg" id="ns-closed"></div></div>
+      <div class="ss3">Access &amp; patient portal</div>
+      <label class="fck" style="margin-bottom:8px"><input type="checkbox" id="ns-dentall"/> Dentists can view all clinic patients <span class="sub">(off = only patients with an appointment or treatment under that dentist)</span></label>
+      <div class="fg" style="max-width:280px"><label class="fl">Patients may cancel online up to (hours before)</label><input class="fc" type="number" min="0" max="168" id="ns-cancelh"/></div>
+      <div class="bg"><button class="btn btn-p" onclick="saveNotifSettings(this)">💾 Save Settings</button></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="ct-ic">🏥</span>Branches &amp; Dentists</div>
+      <div class="ss3" style="margin-top:0">Branches</div>
+      <div id="ref-branches"></div>
+      <div style="display:flex;gap:6px;margin:8px 0 16px"><input class="fc" id="ref-new-branch" placeholder="New branch name" style="flex:1"/><button class="btn btn-s btn-sm" onclick="addRef('branches')">Add</button></div>
+      <div class="ss3">Dentists</div>
+      <div id="ref-dentists"></div>
+      <div style="display:flex;gap:6px;margin-top:8px"><input class="fc" id="ref-new-dentist" placeholder="e.g. Dr. Meliza Yap" style="flex:1"/><button class="btn btn-s btn-sm" onclick="addRef('dentists')">Add</button></div>
+      <div class="sub" style="margin-top:8px">Use the same dentist name every time — overlap checks compare dentist names.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PENDING REGISTRATIONS (admin, staff) ═══════════════ -->
+<div class="page" id="page-registrations">
+  <div class="page-title">New Patient Registrations</div>
+  <div class="page-subtitle">Submissions from the public registration page. Nothing becomes a patient record or an appointment until you approve it.</div>
+  <div class="sg">
+    <div class="sc"><div class="sl">Pending Review</div><div class="sv" id="reg-stat-pending">0</div><div class="ss2">Registrations to check</div></div>
+    <div class="sc"><div class="sl">Appointment Requests</div><div class="sv" style="color:var(--t)" id="reg-stat-requests">0</div><div class="ss2">Pending confirmation</div></div>
+    <div class="sc"><div class="sl">Possible Duplicates</div><div class="sv" style="color:#D85A30" id="reg-stat-dup">0</div><div class="ss2">Match an existing patient</div></div>
+    <div class="sc"><div class="sl">Approved</div><div class="sv" style="color:#639922" id="reg-stat-approved">0</div><div class="ss2">This month</div></div>
+  </div>
+  <div class="date-filter-bar">
+    <div class="date-tabs" id="reg-tabs">
+      <button class="date-tab active" onclick="setRegTab('Pending Review',this)">Pending Review</button>
+      <button class="date-tab" onclick="setRegTab('Requests',this)">Appointment Requests</button>
+      <button class="date-tab" onclick="setRegTab('Approved',this)">Approved</button>
+      <button class="date-tab" onclick="setRegTab('Rejected',this)">Rejected</button>
+      <button class="date-tab" onclick="setRegTab('All',this)">All</button>
+    </div>
+    <input class="si" id="reg-search" placeholder="Search name, reference no. or mobile…" oninput="renderRegistrations()" style="max-width:340px"/>
+    <a class="btn btn-o btn-sm" href="register.html" target="_blank" style="text-decoration:none">🔗 Open public form</a>
+  </div>
+  <div class="card"><div style="overflow-x:auto"><table>
+    <thead><tr><th>Reference</th><th>Name</th><th>Submitted</th><th>Status</th><th>Appointment request</th><th></th></tr></thead>
+    <tbody id="reg-list"><tr><td colspan="6" class="empty-cell">Loading…</td></tr></tbody></table></div></div>
+</div>
+
+<!-- ═══════════════ USERS & ROLES (admin) ═══════════════ -->
+<div class="page" id="page-users">
+  <div class="page-title">Users &amp; Roles</div>
+  <div class="page-subtitle">Create clinic logins and decide what each person can see and do. Permissions are enforced by the database, not just by hiding buttons.</div>
+  <div class="sg">
+    <div class="sc"><div class="sl">Admins</div><div class="sv" id="users-stat-admin">0</div><div class="ss2">Full access</div></div>
+    <div class="sc"><div class="sl">Dentists</div><div class="sv" style="color:var(--t)" id="users-stat-dentist">0</div><div class="ss2">Own schedule &amp; patients</div></div>
+    <div class="sc"><div class="sl">Staff</div><div class="sv" style="color:#639922" id="users-stat-staff">0</div><div class="ss2">Front desk</div></div>
+    <div class="sc"><div class="sl">Patients</div><div class="sv" style="color:var(--mu)" id="users-stat-patient">0</div><div class="ss2">Portal logins</div></div>
+  </div>
+  <div class="sbar">
+    <input class="si" id="users-search" placeholder="Search name or e-mail…" oninput="renderUsers()"/>
+    <select class="fc" id="users-role" onchange="renderUsers()" style="max-width:180px"><option value="">All roles</option><option value="admin">Administrator</option><option value="dentist">Dentist</option><option value="staff">Staff</option><option value="patient">Patient</option></select>
+    <button class="btn btn-p" onclick="openAddUserDialog()">➕ Add User</button>
+  </div>
+  <div class="card">
+    <div style="overflow-x:auto"><table><thead><tr><th>User</th><th>Role</th><th>Dentist / Patient</th><th>Status</th><th>Created</th><th></th></tr></thead>
+    <tbody id="users-table"></tbody></table></div>
+  </div>
+  <div class="card" style="background:var(--tl)">
+    <div class="card-title"><span class="ct-ic">ℹ️</span>What each role can do</div>
+    <div style="overflow-x:auto"><table class="perm-table"><thead><tr><th></th><th>Admin</th><th>Dentist</th><th>Staff</th><th>Patient</th></tr></thead><tbody>
+      <tr><td>Register / edit patients</td><td>✔</td><td>—</td><td>✔</td><td>—</td></tr>
+      <tr><td>See patient records</td><td>All</td><td>Assigned only</td><td>All</td><td>Own only</td></tr>
+      <tr><td>Book / reschedule appointments</td><td>✔</td><td>Status only, own</td><td>✔</td><td>Request (Stage 3)</td></tr>
+      <tr><td>Treatment entries &amp; dental chart</td><td>✔</td><td>✔ (assigned)</td><td>View</td><td>—</td></tr>
+      <tr><td>X-rays / clinical images</td><td>✔</td><td>✔ (assigned)</td><td>—</td><td>—</td></tr>
+      <tr><td>Record payments</td><td>✔</td><td>—</td><td>✔</td><td>—</td></tr>
+      <tr><td>Refunds, corrections, voids, audit trail</td><td>✔</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Financial reports &amp; expenses</td><td>✔</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Message log / retry</td><td>✔</td><td>—</td><td>✔</td><td>—</td></tr>
+      <tr><td>Settings, branches, users &amp; roles</td><td>✔</td><td>—</td><td>—</td><td>—</td></tr>
+    </tbody></table></div>
+  </div>
+</div>
+
+<!-- ═══════════════ PATIENT PORTAL (Stage 3 fills this in) ═══════════════ -->
+<div class="page" id="page-portal">
+  <div class="page-title">My Portal</div>
+  <div class="page-subtitle">Your appointments, requests and bills at DMY Dental Clinic.</div>
+  <div id="portal-body"></div>
+</div>
+
+<!-- ═══════════════ PDF EXPORT ═══════════════ -->
+<div class="page" id="page-pdf">
+  <div class="page-title">PDF Export</div>
+  <div class="page-subtitle">Generate professional PDFs — patient records, treatment ledger, dental chart, monthly report.</div>
+  <div id="pdf-status" class="alert al-i" style="display:none">⏳ Generating PDF...</div>
+
+  <div class="alert al-i" style="margin-bottom:16px">
+    💡 <strong>Tip:</strong> Upload patient images in the <em>Images / X-Rays</em> section first, then check <em>Include Images</em> below to embed them in your PDF.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    <div class="card">
+      <div class="card-title"><span class="ct-ic">👤</span>Patient Record PDF</div>
+      <div class="fg" style="margin-bottom:10px;position:relative"><label class="fl">Patient</label>
+        <input class="fc" type="text" id="pdf-px" placeholder="Search patient name…" autocomplete="off" oninput="pdfPxSearch(this.value)"/>
+        <div id="pdf-px-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--bd);border-radius:8px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.1);max-height:180px;overflow-y:auto"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
+        <label class="fck"><input type="checkbox" id="inc-info" checked/>Personal Information</label>
+        <label class="fck"><input type="checkbox" id="inc-med"  checked/>Medical History</label>
+        <label class="fck"><input type="checkbox" id="inc-tx"   checked/>Treatment Records</label>
+        <label class="fck"><input type="checkbox" id="inc-chart" checked/>Dental Chart Summary</label>
+        <label class="fck" style="color:var(--t);font-weight:700">
+          <input type="checkbox" id="inc-images" checked/>
+          🖼 Include Uploaded Images / X-Rays
+        </label>
+      </div>
+      <button class="btn btn-p" style="width:100%" onclick="pdfPatient()">📄 Export Patient Record</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ct-ic">📋</span>Treatment Ledger PDF</div>
+      <div class="fg" style="margin-bottom:10px;position:relative"><label class="fl">Patient</label>
+        <input class="fc" type="text" id="pdf-tx-px" placeholder="Search patient name…" autocomplete="off" oninput="pdfTxPxSearch(this.value)"/>
+        <div id="pdf-tx-px-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--bd);border-radius:8px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.1);max-height:180px;overflow-y:auto"></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Date From</label><input class="fc" type="date" id="pdf-from"/></div>
+        <div class="fg"><label class="fl">Date To</label><input class="fc" type="date" id="pdf-to"/></div>
+      </div>
+      <label class="fck" style="color:var(--t);font-weight:700;margin:8px 0">
+      </label>
+      <button class="btn btn-s" style="width:100%;margin-top:8px" onclick="pdfTreatment()">📄 Export Treatment Ledger</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ct-ic">📊</span>Monthly Report PDF</div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Month</label>
+          <select class="fc" id="pdf-mo">
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Year</label><input class="fc" type="number" id="pdf-yr" value="2026" min="2000" max="9999" maxlength="4" oninput="if(this.value.length>4)this.value=this.value.slice(0,4)"/></div>
+      </div>
+      <button class="btn btn-g" style="width:100%;margin-top:8px" onclick="pdfReport()">📄 Export Monthly Report</button>
+    </div>
+
+  </div>
+</div><!-- /page-pdf -->
+
+<!-- ═══════════════ PHYSICAL RECORDS ═══════════════ -->
+<div class="page" id="page-physical">
+  <div class="page-title">Physical Records Import</div>
+  <div class="page-subtitle">Scan or photograph old paper records and attach them to a patient. They'll appear in the Patient List automatically.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:0">
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="ct-ic">👤</span>Patient Details</div>
+        <div class="fr c2">
+          <div class="fg" style="position:relative">
+            <label class="fl">Patient Name *</label>
+            <input class="fc" id="ph-name" placeholder="Enter patient name…"
+                   autocomplete="off"
+                   oninput="physPatientSearch(this.value)"
+                   onfocus="physPatientSearch(this.value)"/>
+            <div id="ph-autocomplete" class="ac-dropdown" style="display:none"></div>
+            <div style="font-size:11px;color:var(--mu);margin-top:3px"> Pick an existing patient to autofill, or type a new name to register them.</div>
+          </div>
+          <div class="fg"><label class="fl">Age</label><input class="fc" type="number" id="ph-age" placeholder="—"/></div>
+        </div>
+        <div class="fr c2">
+          <div class="fg"><label class="fl">Sex</label>
+            <select class="fc" id="ph-sex">
+              <option value="">Select</option>
+              <option>Male</option><option>Female</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">Notes / Record Type</label>
+            <input class="fc" id="ph-note" placeholder="e.g. Old PDA record, 2019"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- <div class="card">
+        <div class="card-title"><span class="ct-ic">📤</span>Upload Scanned Pages</div>
+        <div class="ph-drop" id="ph-drop"
+             onclick="document.getElementById('ph-inp').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="this.classList.remove('drag-over');handlePhysDrop(event)">
+          <input type="file" id="ph-inp" accept="image/*,application/pdf" multiple
+                 onchange="uploadPhysical(event)"/>
+          <div class="ph-drop-icon">📋</div>
+          <div class="ph-drop-title">Click or drag &amp; drop scanned record pages</div>
+          <div class="ph-drop-sub">JPG, PNG, PDF supported · Multiple pages at once</div>
+          <div class="ph-drop-sub" style="margin-top:6px;color:var(--o);font-weight:600">
+            ⚠ Enter patient name above before uploading
+          </div>
+        </div>
+        <div class="alert al-i" style="margin-top:12px;margin-bottom:0">
+          💡 Each upload batch becomes one record set. Upload again to add more record sets for the same patient.
+        </div>
+        <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="savePhysicalRecord()">💾 Save Physical Record</button>
+      </div> -->
+      <div class="card">
+        <div class="card-title"><span class="ct-ic">📤</span>Upload Scanned Pages</div>
+        <div id="ph-upload-zone-wrap"></div>
+        <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="savePhysicalRecord()">💾 Save Physical Record</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="background:linear-gradient(135deg,var(--tl) 0%,#fff 100%)">
+        <div class="card-title"><span class="ct-ic">ℹ️</span>How It Works</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:var(--o);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div><div><div style="font-family:var(--fh);font-size:12px;font-weight:700;color:var(--td)">Fill in patient name</div><div style="font-size:11px;color:var(--mu);margin-top:2px">This is used to match or create the patient in the system.</div></div></div>
+          <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:var(--o);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div><div><div style="font-family:var(--fh);font-size:12px;font-weight:700;color:var(--td)">Upload scanned pages</div><div style="font-size:11px;color:var(--mu);margin-top:2px">Select all pages of a record in one batch. Multi-page records stay grouped.</div></div></div>
+          <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:var(--o);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div><div><div style="font-family:var(--fh);font-size:12px;font-weight:700;color:var(--td)">Patient is added automatically</div><div style="font-size:11px;color:var(--mu);margin-top:2px">The patient appears in Patient List with a <span style="background:#EEF0FF;color:#4B46C8;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700">📄 Records</span> badge. Click it to view all scans.</div></div></div>
+          <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:var(--t);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div><div><div style="font-family:var(--fh);font-size:12px;font-weight:700;color:var(--td)">View &amp; navigate pages</div><div style="font-size:11px;color:var(--mu);margin-top:2px">Click any thumbnail to open full-screen viewer. Use arrow keys or buttons to flip pages.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px">
+        <span class="ct-ic">📂</span>
+        <span>Uploaded Physical Records</span>
+        <span id="ph-count" style="font-size:11px;color:var(--mu);font-weight:400;margin-left:6px">0 record sets</span>
+      </span>
+      <span id="ph-filter-status" style="font-size:11px;color:var(--mu);font-weight:400">Enter a patient name above to view their records</span>
+    </div>
+    <div id="ph-queue-empty" style="font-size:12px;color:var(--mu);text-align:center;padding:28px 0">
+      Enter a patient name above to view their physical records.
+    </div>
+    <div id="ph-queue"></div>
+  </div>
+</div><!-- /page-physical -->
+
+</div><!-- /main -->
+
+<!-- ═══ PHYSICAL RECORDS MODAL ═══ -->
+<div class="phys-modal-overlay" id="phys-modal" onclick="if(event.target===this)closePhysModal()">
+  <div class="phys-modal-box">
+    <div class="phys-modal-header">
+      <h3 id="phys-modal-title">Physical Records</h3>
+      <button class="phys-modal-close" onclick="closePhysModal()">✕</button>
+    </div>
+    <div class="phys-modal-body" id="phys-modal-content"></div>
+  </div>
+</div>
+
+<!-- ═══ FULL-SCREEN PAGE VIEWER ═══ -->
+<div class="phys-viewer" id="phys-viewer">
+  <button class="pv-close" onclick="closePhysViewer()">✕</button>
+  <img id="pv-img" src="" alt="Record page"/>
+  <div class="pv-caption" id="pv-caption"></div>
+  <div class="pv-controls">
+    <button class="pv-btn" id="pv-prev" onclick="viewerNav(-1)">◀ Prev</button>
+    <button class="pv-btn" id="pv-next" onclick="viewerNav(1)">Next ▶</button>
+  </div>
+</div>
+</div><!-- /app-body -->
+
+<!-- ═══ LIGHTBOX ═══ -->
+<div class="lightbox" id="lightbox" onclick="closeLb()">
+  <button class="lightbox-close" onclick="closeLb()">✕</button>
+  <img id="lb-img" src="" alt=""/>
+  <div class="lightbox-cap" id="lb-cap"></div>
+</div>
+
+<!-- ═══ PATIENT CONFIRMATION MODAL ═══ -->
+<div class="confirm-overlay" id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-head">
+      <h3>🔍 Please Confirm Patient Information</h3>
+      <button class="btn-close" onclick="closeConfirmModal()">✕</button>
+    </div>
+    <div class="confirm-body" id="confirm-body"></div>
+    <div class="confirm-foot">
+      <button class="btn btn-gray" onclick="closeConfirmModal()">← Go Back &amp; Edit</button>
+      <button class="btn btn-p" id="confirm-save-btn" onclick="confirmAndSave()">✓ Confirm &amp; Save Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EDIT PATIENT MODAL ═══ -->
+<div class="edit-overlay" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-box">
+    <div class="edit-head">
+      <h3>✏️ Edit Patient Information</h3>
+      <button class="btn-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="edit-body">
+      <div class="fr c2" style="margin-bottom:8px">
+        <div class="fg"><label class="fl">Patient ID</label><input class="fc" id="ed-id" readonly style="background:#f5f5f5;color:var(--mu)"/></div>
+        <div class="fg"><label class="fl">Name</label><input class="fc" id="ed-name"/></div>
+      </div>
+      <div class="fr c3" style="margin-bottom:8px">
+        <div class="fg"><label class="fl">Age</label><input class="fc" type="number" id="ed-age"/></div>
+        <div class="fg"><label class="fl">Sex</label><select class="fc" id="ed-sex"><option>Male</option><option>Female</option></select></div>
+        <div class="fg"><label class="fl">Status</label><select class="fc" id="ed-status"><option>New</option><option>Active</option><option>Follow-up</option><option>Physical</option></select></div>
+      </div>
+      <div class="fr c2" style="margin-bottom:8px">
+        <div class="fg"><label class="fl">Mobile (11 digits)</label><input class="fc" id="ed-mobile" inputmode="numeric" maxlength="11"/></div>
+        <div class="fg"><label class="fl">Email</label><input class="fc" type="email" id="ed-email"/></div>
+      </div>
+      <div class="fr" style="margin-bottom:8px">
+        <div class="fg"><label class="fl">Address</label><input class="fc" id="ed-addr"/></div>
+      </div>
+      <div class="fr c2" style="margin-bottom:8px">
+        <div class="fg"><label class="fl">Parent/Guardian</label><input class="fc" id="ed-guard"/></div>
+        <div class="fg"><label class="fl">Registered Date</label><input class="fc" type="date" id="ed-date"/></div>
+      </div>
+    </div>
+    <div class="edit-foot">
+      <button class="btn btn-gray" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-p" id="edit-save-btn" onclick="saveEditedPatient()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- shared datalist for dentist inputs (filled from the dentists table) -->
+<datalist id="dl-dentists"></datalist>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/notif.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/roles.js"></script>
+<script src="js/tooth-chart.js"></script>
+<script src="js/images.js"></script>
+<script src="js/patients.js"></script>
+<script src="js/ledger.js"></script>
+<script src="js/treatment.js"></script>
+<script src="js/appointments.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/fin-reports.js"></script>
+<script src="js/physical-records.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/registrations.js"></script>
+<script src="js/portal.js"></script>
+<script src="js/patient-profile.js"></script>
+<script>
+  setTimeout(initDash, 150);
+
+
+  function toggleSidebar() {
+    const sb  = document.getElementById('sidebar');
+    const ov  = document.getElementById('sidebar-overlay');
+    const open = sb.classList.toggle('open');
+    ov.classList.toggle('open', open);
+  }
+
+  function chartPatientSearch(q) {
+    const dropdown = document.getElementById('dc-autocomplete');
+    dropdown.innerHTML = '';
+    if (!q) { dropdown.style.display = 'none'; return; }
+    const matches = (typeof allPatients !== 'undefined' ? allPatients : [])
+      .filter(p => p.name.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+    if (!matches.length) { dropdown.style.display = 'none'; return; }
+    matches.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'ac-item';
+      item.innerHTML = '<strong>'+p.name+'</strong> <span style="color:var(--mu);font-size:11px">'+p.id+' · Age '+p.age+'</span>';
+      item.onclick = () => {
+        document.getElementById('dc-nm').value = p.name;
+        const ag = document.getElementById('dc-ag'); if (ag) ag.value = p.age||'';
+        dropdown.style.display = 'none';
+        loadChartForPatient(p.name);
+      };
+      dropdown.appendChild(item);
+    });
+    dropdown.style.display = 'block';
+  }
+
+  document.addEventListener('click', e => {
+    ['dc', 'xr'].forEach(prefix => {
+      const inp = document.getElementById(prefix + '-nm') || document.getElementById(prefix + '-px');
+      const dd  = document.getElementById(prefix + '-autocomplete');
+      if (inp && dd && !inp.contains(e.target) && !dd.contains(e.target)) dd.style.display = 'none';
+    });
+  });
+</script>
+
+<!-- ═══ PROFILE MODAL ═══ -->
+<div class="phys-modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
+  <div class="phys-modal-box" style="max-width:420px">
+    <div class="phys-modal-header">
+      <h3>👤 Edit Profile</h3>
+      <button class="phys-modal-close" onclick="closeProfileModal()">✕</button>
+    </div>
+    <div class="phys-modal-body">
+      <div class="fg"><label class="fl">Display Name</label><input class="fc" id="prof-name" placeholder="Dr. Full Name"/></div>
+      <div class="fg"><label class="fl">Email</label><input class="fc" id="prof-email" readonly style="background:#f5f5f5;color:var(--mu)"/></div>
+      <div class="fg"><label class="fl">Title / Role</label><input class="fc" id="prof-title" placeholder="e.g. General Dentist"/></div>
+      <div class="fg"><label class="fl">New Password <span style="color:var(--mu);font-weight:400">(leave blank to keep current)</span></label><input class="fc" type="password" id="prof-pwd" placeholder="Min. 6 characters"/></div>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn btn-p" id="prof-save-btn" onclick="saveProfile()" style="flex:1">Save Changes</button>
+        <button class="btn btn-o" onclick="closeProfileModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Date year guard: reset year to 0000 if > 4 digits or invalid ── */
+function guardDateYear(input) {
+  if (!input.value) return;
+  const parts = input.value.split('-');
+  if (parts.length < 1) return;
+  const year = parts[0];
+  if (year.length > 4 || parseInt(year) < 1000 || parseInt(year) > 9999) {
+    parts[0] = '0000';
+    input.value = parts.join('-');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // All date inputs that need year guarding
+  const dateIds = ['tr-dt', 'tr-nx', 'p-bd', 'p-lv', 'dc-dt', 'ed-date'];
+  dateIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => guardDateYear(el));
+    el.addEventListener('blur',   () => guardDateYear(el));
+    el.addEventListener('input',  () => {
+      const parts = el.value.split('-');
+      if (parts[0] && parts[0].length > 4) guardDateYear(el);
+    });
+  });
+
+  // Also guard dynamically — catch any date input not listed above
+  document.addEventListener('change', e => {
+    if (e.target.type === 'date') guardDateYear(e.target);
+  });
+});
+</script>
+
+</body>
+</html>
